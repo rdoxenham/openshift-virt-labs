@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "fc31-nfs"
+  labels:
+    app: containerized-data-importer
+  annotations:
+    cdi.kubevirt.io/storage.import.endpoint: "http://192.168.123.100:81/Fedora-Cloud-Base-31-1.9.x86_64.raw"
+spec:
+  volumeMode: Filesystem
+  storageClassName: nfs
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi

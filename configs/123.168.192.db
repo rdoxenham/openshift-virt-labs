@@ -1,0 +1,22 @@
+@   IN  SOA     ocp4-bastion.cnv.example.com. root.cnv.example.com. (
+                                                1001    ;Serial
+                                                3H      ;Refresh
+                                                15M     ;Retry
+                                                1W      ;Expire
+                                                1D      ;Minimum TTL
+                                                )
+
+;Name Server Information
+@ IN  NS      ocp4-bastion.cnv.example.com.
+
+;Reverse lookup for Name Server
+100      IN  PTR     ocp4-bastion.cnv.example.com.
+
+;PTR Record IP address to HostName
+99	 IN  PTR     ocp4-bootstrap.cnv.example.com.
+101      IN  PTR     ocp4-master1.cnv.example.com.
+102      IN  PTR     ocp4-master2.cnv.example.com.
+103      IN  PTR     ocp4-master3.cnv.example.com.
+104      IN  PTR     ocp4-worker1.cnv.example.com.
+105      IN  PTR     ocp4-worker2.cnv.example.com.
+

@@ -1,0 +1,7 @@
+apiVersion: kubevirt.io/v1alpha1
+kind: NodeMaintenance
+metadata:
+  name: worker1-maintenance
+spec:
+  nodeName: ocp4-worker1.cnv.example.com
+  reason: "Worker1 Maintenance"

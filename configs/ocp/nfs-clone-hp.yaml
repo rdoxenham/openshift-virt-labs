@@ -1,0 +1,18 @@
+apiVersion: cdi.kubevirt.io/v1alpha1
+kind: DataVolume
+metadata:
+  name: fc31-clone
+annotations:
+  kubevirt.io/provisionOnNode: ocp4-worker2.cnv.example.com
+spec:
+  source:
+    pvc:
+      namespace: default
+      name: fc31-nfs
+  pvc:
+    accessModes:
+      - ReadWriteOnce
+    storageClassName: hostpath-provisioner
+    resources:
+      requests:
+        storage: 20Gi

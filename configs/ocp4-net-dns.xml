@@ -1,0 +1,16 @@
+<network>
+  <name>ocp4-net</name>
+  <uuid>0cb5becb-cea8-4c16-a390-1ee0c5e06ac5</uuid>
+  <forward mode='nat'/>
+  <bridge name='virbr-ocp4' stp='on' delay='0'/>
+  <mac address='52:54:00:a5:6b:b4'/>
+  <dns>
+    <host ip='192.168.123.100'>
+      <hostname>api-int.example.com</hostname>
+      <hostname>api.example.com</hostname>
+    </host>
+  </dns>
+  <ip address='192.168.123.1' netmask='255.255.255.0'>
+  </ip>
+</network>
+

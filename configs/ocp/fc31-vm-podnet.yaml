@@ -1,0 +1,55 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  name: fc31-podnet
+  labels:
+    app: fc31-podnet
+    flavor.template.kubevirt.io/small: 'true'
+    os.template.kubevirt.io/fedora31: 'true'
+    vm.kubevirt.io/template: fedora-server-small-v0.7.0
+    vm.kubevirt.io/template-namespace: openshift
+    workload.template.kubevirt.io/server: 'true'
+spec:
+  running: true
+  template:
+    metadata:
+      labels:
+        flavor.template.kubevirt.io/small: 'true'
+        kubevirt.io/size: small
+        os.template.kubevirt.io/fedora31: 'true'
+        vm.kubevirt.io/name: fc31-podnet
+        workload.template.kubevirt.io/server: 'true'
+    spec:
+      domain:
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
+        devices:
+          autoattachPodInterface: false
+          disks:
+            - bootOrder: 1
+              disk:
+                bus: virtio
+              name: disk0
+          interfaces:
+            - name: nic0
+              model: virtio
+              masquerade: {}
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: pc-q35-rhel8.1.0
+        resources:
+          requests:
+            memory: 2Gi
+      evictionStrategy: LiveMigrate
+      hostname: fc31-podnet
+      networks:
+        - name: nic0
+          pod: {}
+      terminationGracePeriodSeconds: 0
+      volumes:
+        - name: disk0
+          persistentVolumeClaim:
+            claimName: fc31-nfs

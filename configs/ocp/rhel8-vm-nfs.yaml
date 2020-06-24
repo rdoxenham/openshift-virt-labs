@@ -1,0 +1,67 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  annotations:
+    name.os.template.kubevirt.io/rhel8: Red Hat Enterprise Linux 8.0
+  labels:
+    flavor.template.kubevirt.io/small: "true"
+    kubevirt.io/os: rhel8
+    os.template.kubevirt.io/rhel8: "true"
+    template.kubevirt.ui: openshift_rhel8-generic-large
+    vm.kubevirt.io/template: rhel8-generic-small
+    workload.template.kubevirt.io/generic: "true"
+    app: rhel8-server-nfs
+  name: rhel8-server-nfs
+spec:
+  running: true
+  template:
+    metadata:
+      labels:
+        vm.kubevirt.io/name: rhel8-server-nfs
+    spec:
+      domain:
+        clock:
+          timer:
+            hpet:
+              present: false
+            hyperv: {}
+            pit:
+              tickPolicy: delay
+            rtc:
+              tickPolicy: catchup
+          utc: {}
+        devices:
+          disks:
+          - disk:
+              bus: sata
+            name: rhel8-nfs
+          interfaces:
+          - bridge: {}
+            model: e1000
+            name: tuning-bridge-fixed 
+        features:
+          acpi: {}
+          apic: {}
+          hyperv:
+            relaxed: {}
+            spinlocks:
+              spinlocks: 8191
+            vapic: {}
+        firmware:
+          uuid: 5d307ca9-b3ef-428c-8861-06e72d69f223
+        machine:
+          type: q35
+        resources:
+          requests:
+            memory: 2048M
+      evictionStrategy: LiveMigrate
+      networks:
+        - multus:
+            networkName: tuning-bridge-fixed
+          name: tuning-bridge-fixed
+      terminationGracePeriodSeconds: 0
+      volumes:
+      - name: rhel8-nfs
+        persistentVolumeClaim:
+          claimName: rhel8-nfs
+

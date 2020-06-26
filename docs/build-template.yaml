@@ -5,7 +5,7 @@ message: |
 
 metadata:
   annotations:
-    openshift.io/display-name: Bookbag
+    openshift.io/display-name: Bookbag Build
     tags: gpte
     template.openshift.io/bindable: "false"
   name: bookbag-build
@@ -18,7 +18,7 @@ parameters:
     required: true
     value: quay.io/roxenham/cnv-workbook:latest
   - name: GIT_REPO
-    value: https://github.com/rdoxenham/cnv-workbook.git
+    value: https://github.com/rdoxenham/bookbag-template.git
 
 objects:
   - apiVersion: image.openshift.io/v1

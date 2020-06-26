@@ -1,0 +1,217 @@
+:markup-in-source: verbatim,attributes,quotes
+
+
+= Bookbag Template
+
+This repository should be used as a template for creating (converting) lab content to
+be used in Bookbag environments. 
+
+== Creating (converting) Lab Content
+
+. Create a new repository using this one as a template (use the green button *Use this template*).
+
+. Define which modules you want to include in your lab.
+
+. List the modules in the `workshop.yaml` file.
+
+. Edit the `modules.yaml` file to specify modules names and transitions.
+
+. Edit the modules Asciidoc files (`workshop/content/*.adoc`).
+
+. Define which variables you are going to use in your lab instructions (e.g. `GUID`, `user`, `user_info_messages`, and custom variables set by `agnosticd_user_info`).
+(This is explained in more detail below.)
+
+
+
+== Building the Bookbag Image
+
+There are two ways of building the Bookbag image.
+
+=== Docker build
+
+Just run the `docker build .` command from the project root directory.
+
+NOTE: Podman doesn't work properly on this build yet.
+
+=== Source-2-image build
+
+You'll need to be logged in an OpenShift cluster to use S2I build.
+
+. Create a new OpenShift project.
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc new-project mylab-bookbag*
+----
+
+. Create the bookbag BuildConfig and ImageStream
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc process -f build-template.yaml -p NAME="bookbag" -p GIT_REPO="https://github.com/<ACCOUNT>/<LABREPO>.git" | oc apply -f -*
+----
+
+. Build your Bookbag Image from Git:
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc start-build bookbag --follow*
+----
++
+Or build from local source (aka "binary build"):
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc start-build bookbag --follow --from-dir=.*
+----
+
+== Deploying the Bookbag image
+
+To deploy a Bookbag with lab instructions on an OpenShift cluster:
+
+. Use your existing OpenShift project namespace where you built the image:
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc project mylab-bookbag*
+----
+
+. Process the deploy template:
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc process -f deploy-template.yaml -p NAME="bookbag" -p IMAGE_STREAM_NAME="bookbag" | oc apply -f -*
+----
+
+. Get the Bookbag's Route:
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc get route -lapp=bookbag-004*
+NAME          HOST/PORT                                                                   PATH   SERVICES      PORT        TERMINATION     WILDCARD
+bookbag-004   bookbag-004-bookbag-test.apps.cluster-xxxx.xxxx.dev.open.redhat.com                bookbag-004   10080-tcp   edge/Redirect   None
+----
+
+. Use this Route hostname to open the Bookbag page in your browser.
+
+
+== Customizing Lab Instructions for Bookbag
+
+Bookbag accepts lab instructions written in Asciidoc or Markdown although in Red Hat Asciidoc is considered the standard.
+When editing your instructions for Bookbag some Asciidoc elements might be helpful:
+
+* You can use environment variables throughout the text to provide users with lab-specific information such as
+GUID, user credentials, URLs, etc.
+* You can use font formatting such as *bold*, _italic_, etc. in command line and code examples.
+For example you can use bold font for commands that the user should input on the keyboard, 
+italic for parameters that should be replaced, etc.
+You can make certain parts of the output bold to attract attention to the changes.
+
+=== AgnosticD User Info in Acsiidoc
+
+Bookbag pods will be deployed and configured so that information set by `agnosticd_user_info` when provisioning the lab is accessible within the content as macros.
+In production your bookbag pods will be deployed for you with these settings.
+During content development you will likely want to pass thes yourself.
+
+All lab environments have a variable, `GUID` set.
+Single-user lab environments also have `user_info_messages` set, containing any messages passed with `agnosticd_user_info`, concatenated into a string with line breaks.
+For multi-user lab environments, the variable `user` may be used to get the user name and `user_info_messages` is not available.
+
+You can pass environment variable to the Bookbag container and then use them in lab instructions.
+For example, instead of telling the user: "Use this URL and don't forget to replace 'GUID' with your actual GUID"
+you can pass the actual GUID to the Bookbag container and create a URL that can be copied and pasted without any changes.
+
+. Create a file called `workshop-vars.js` and define your variables like this for a single-user lab environment:
++
+----
+{
+    "GUID": "acdc",
+    "user_info_messages": "hello\nworld\n",
+    "some_custom_var": "example"
+}
+----
++
+Or if developing for a multi-user lab environment:
++
+----
+{
+    "GUID": "acdc",
+    "user": "student1",
+    "some_custom_var": "example"
+}
+----
+
+. In the beginning of each of your Asciidoc files include these variables and define Asciidoc's attributes 
+("attributes" is the Asciidoc's word for variables). Here is the example:
+----
+:USER_GUID: %GUID%
+:USERNAME: %user%
+:CUSTOM_VAR: %some_custom_var%
+----
+
+. Use those variables in Asciidoc files like this: `You username for this lab is {USERNAME}`. 
+Avoid mixing environment variables you use in shell commands and variables you use in Asciidoc text.
+For example, you might use `${GUID}` in your shell commands--in this case use `{USER_GUID}` in
+the text.
+
+. You may want to use a multi-line variable such as output of the deployment command with 
+user information. The variable `user_info_messages` in the example above havs multi-line content.
+In this case use the `[%hardbreaks]` directive to preserve formatting, like this:
++
+----
+Here are your informational messages:
+
+[%hardbreaks]
+%user_info_messages%
+
+----
+
+. Use the following command to deploy the image and pass the variables:
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc process -f deploy-template.yaml -p NAME="bookbag" -p IMAGE_STREAM_NAME="bookbag" -p WORKSHOP_VARS="$(cat workshop-vars.json)" | oc apply -f -*
+----
+
+=== Text formatting in preformatted parts
+
+If you want to use text formatting in command line or source code examples, use the following:
+
+. Add this line at the top of your Asciidoc file:
++
+----
+:markup-in-source: verbatim,attributes,quotes
+----
+
+. Format your command line or source code blocks the following way:
++
+------
+[source,subs="{markup-in-source}"]
+----
+$ *oc get pods*
+NAME                           READY   STATUS    RESTARTS   AGE
+bookbag-005-5ffcccf9cf-584rt   2/2     Running   0          21h
+----
+------
++
+It will look like this:
++
+[source,subs="{markup-in-source}"]
+----
+$ *oc get pods*
+NAME                           READY   STATUS    RESTARTS   AGE
+bookbag-005-5ffcccf9cf-584rt   2/2     Running   0          21h
+----
+
+
+It is recommended to use a bold font to distinguish the command user is expected to type on the keyboard
+from its output.
+Also, place a dollar sign prompt `$` in the beginning of the line. 
+If the command should be run as root, place a hash `#`.
+
+
+'''
+
+The code here is derived from https://github.com/openshift-homeroom.
+This repository is based on https://github.com/openshift-homeroom/lab-asciidoc-sample
+

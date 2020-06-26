@@ -1,0 +1,15 @@
+name: OpenShift virtualisation Labs
+
+modules:
+    activate:
+    - welcome
+    - validation
+    - deploy-cnv
+    - storage-setup
+    - network-setup
+    - deploy-workloads
+    - cloning
+    - live-migration
+    - masquerade
+    - console
+    - upgrading-cnv

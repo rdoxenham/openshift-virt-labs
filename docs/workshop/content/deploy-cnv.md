@@ -8,9 +8,6 @@ From within the lab guide window you'll see a button in the middle at the top th
 
 > **NOTE**: You can use the dashboard in a separate tab should you wish, you can use this link: https://console-openshift-console.apps.cnv.example.com/dashboards and you'll find the kubeadmin password in */root/ocp-install/auth/kubeadmin-password* on node *192.168.123.100*.
 
-You first need to create a new namespace for OpenShift virtualisation to reside in. On the left hand side of the console panel (or in your new tab) navigate to the Administration --> Namespaces page. Now click '**Create Namespace**'. in the name field, type **openshift-cnv**, finally click '**Create**'.
-
-
 Next, navigate to the top-level '**Operators**' menu entry, and select '**OperatorHub**'. This lists all of the available operators that you can install from the Red Hat Marketplace. Simply start typing '**virtualization**' in the search box and you should see an entry called "Container-native virtualization". Simply select it and you'll see a window that looks like the following:
 
 <img  border="1" src="img/cnv-operator.png"/>

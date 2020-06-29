@@ -13,8 +13,6 @@ RUN rm -rf /tmp/src/.git* && \
     tar -zxvf /opt/app-root/bin/openshift-client-linux.tar.gz -C /opt/app-root/bin/ && \
     chmod a+x /opt/app-root/bin/oc
 
-ENV TERMINAL_TAB=split
-
 USER 1001
 
 RUN /usr/libexec/s2i/assemble

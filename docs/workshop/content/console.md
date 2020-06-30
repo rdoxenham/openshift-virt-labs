@@ -55,34 +55,30 @@ The same is true for all components of our VM's and VMI's from the labs. If you 
 
 ### Launch a VM
 
-Now let's launch a RHEL 8 VM via the UI using the same components we used via the CLI.
+Now let's launch a RHEL 8 VM via the UI using the same components we used via the CLI. We first need to delete our original RHEL 8 VM so that we can re-use its disk without causing corruption of the disk. Navigate to "**Workloads**" > "**Virtual Machines**", and delete the "**rhel8-server-nfs**" VM by selecting the three dots on the right hand side and select "**Delete Virtual Machine**" - you'll be asked to confirm.
 
-Go to "**Workloads**" > "**Virtual Machines**" and "**Create**" > "**Create with Wizard**":
+Now, in the same window select "**Create Virtual Machine**" > "**New with Wizard**":
 
 <img src="img/console-10.png"/>
 
 
 
-This brings up a an easy to follow wizard to launch the VM!
+This brings up a an easy to follow wizard to launch the VM:
 
 <img src="img/console-11.png"/>
 
 Let's review the choices shown above:
 
-* **Name**: Choose an obvious name
+* **Name**: Choose an obvious name, here we just went with "rhel8-ui-nfs"
 * **Template**: We don't need to select a template for this VM
-* **Provision Source**: Depending what we choose here we can select more in the storage tab. Here we choose "*Cloned Disk*" so we can use the rhel8 storage we created earlier.
+* **Source**: Depending what we choose here we can select more in the storage tab. Here we choose "* Disk*" so we can use the rhel8 storage we created earlier.
 * **Operating System**: We will use "Red Hat Enterprise Linux 8.1"
 * **Flavor**: CLI examples have used "small" so we use it here.
 * **Workload Profile**: CLI examples have used "server" so we use it here.
 
-For the purposes of the lab we do not need cloud-init and we will manually start the VM.
-
-Click "**Next** >" to move to the Networking section:
+Click "**Next** >" to move to the networking section. Here you will need to click the *3 dots* and remove the default entry (standard pod based networking). We want to create a VM that uses the **tuning-bridge-fixed** configuration (the bridge we previously created) so we can connect to the host's NIC via the bridge as described earlier. Select 'Add Network Interface' and fill in as follows, making sure to select "tuning-bridge-fixed" as the network we want to use. Select add when ready:
 
 <img src="img/console-12.png"/>
-
-Here you will need to click the *3 dots* and remove the default entry. We want to create a VM that uses the **tuning-bridge-fixed** configuration (the bridge we previously created) so we can connect to the host's NIC via the bridge as described earlier.
 
 
 
@@ -109,11 +105,11 @@ spec:
 
 <img src="img/console-13.png"/>
 
-Selecting `rhel8-nfs` will populate the "**Size**" and "**Storage Class**"  fields. Ensure "**Bootable Disk**" is set to "**rhel8-nfs**".
+Selecting `rhel8-nfs` will populate the "**Size**" and "**Storage Class**"  fields. Ensure "**Boot Source" is set to "disk0**" (our rhel8-nfs disk):
 
 <img src="img/console-14.png"/>
 
-When ready, click "**Create Virtual Machine >**". You will (hopefully) see a success message and can review the output of the machine:
+When ready, click "**Review and Create >**" at the bottom. You'll then be able to select "**Create Virtual Machine**". You will (hopefully) see a success message and can review the output of the machine:
 
 <img src="img/console-15.png"/>
 
@@ -122,14 +118,6 @@ The VM is now ready to be *started* (the default behaviour is to not start the m
 <img src="img/console-16.png"/>
 
 Now the VM *instance* will start. As with the CLI we can also watch the progress via the UI.
-
-Go to "**Workloads**" > "**Pods**". Here you will see the *virt-launcher* pod (the pod which manages the VM), and the *cdi* pods (upload and clone; the pods which manage the creation of the cloned volume and upload of the rhel8 image for the VM instance):
-
-<img src="img/console-17.png"/>
-
-> **NOTE**: As you can see, we do have some failures in the screenshot above due to earlier testing. But in this case they are not related to the VM instance we are launching so we can safely disregard them.
-
-
 
 After a few minutes (depending on hardware) your instance should report as running:
 
@@ -147,7 +135,7 @@ In this example we have chosen serial and logged in as user: `root` password: `r
 
 <img src="img/console-20.png"/>
 
-As you know, this is a normal shell and you can now use the VM as normal!
+As you know, this is a normal shell and you can now use the VM as normal...
 
 <img src="img/console-22.png"/>
 

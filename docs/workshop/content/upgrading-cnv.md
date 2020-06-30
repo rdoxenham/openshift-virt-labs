@@ -13,19 +13,9 @@ Now, find the vertical dots at the end of the "**Container Native Virtualization
 
 <img src="img/upgrade-edit-sub.png"/>
 
-This defaults to showing you the YAML version of the operator:
-
-<img src="img/upgrade-operator-yaml.png"/>
-
-And while it's very interesting, the UI provides an excellent way to do an upgrade, so choose the "**Overiew**" option highlighted in the image above.
-
-This brings you to the "**Subscription Details**" page for the operator.
+This defaults to showing you the YAML configuration of the subscription. To modify the version, select the '**Details**' button - this brings you to the "**Subscription Details**" page for the operator.
 
 <img src="img/upgrade-main-sub.png"/>
-
-Before we request the upgrade to the operator let's go ahead and switch to automatic approvals for this operator. This means that as soon as a new version is available it will be upgraded as opposed the manual which requires an explicit approvals. Select the *pencil* icon next to the word ""**Manual**" below the "**Approval**" heading. This opens up a simple dialog box where you can choose the "**Automatic (default)**" option:
-
-<img src="img/upgrade-automatic.png"/>
 
 
 Now, let's initiate the upgrade. Underneath "**Channel**" you should see "**2.3**" with the little *pencil* icon next to it - click this and you should see the following box pop-up. Ensure you select "**2.4**" and proceed by clicking "**Save**":

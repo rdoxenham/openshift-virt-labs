@@ -19,7 +19,7 @@ networks:
     pod: {}
 ~~~
 
-So let's go ahead and create a `VirtualMachine` using our existing Fedora 31 image via a PVC we created previously. *Look closely, we are using our cloned PVC so we get the benefits of the installed **NGINX** server, quemu-guest-agent and ssh configuration!*
+So let's go ahead and create a `VirtualMachine` using our existing Fedora 31 image via a PVC we created previously. *Look closely, we are using our cloned PVC so we get the benefits of the installed **NGINX** server, qemu-guest-agent and ssh configuration!*
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -95,13 +95,13 @@ fc31-podnet        77s   Running   10.128.2.66         ocp4-worker1.cnv.example.
 
 Wait about 30 seconds and run the command again.
 
-Has it changed to a 10.0.2.2 IP. And if you were quick enough to see the 10.128 and ping it, it probably worked. But the 10.0.2.2 one won't. *Why is this? What's going on?*
+Has it changed to a 10.0.2.2 IP. And if you were quick enough to see the 10.128 and ping it, it probably worked (be patient, the VM will take some time to come up and respond to ping requests). But the 10.0.2.2 one won't. *Why is this? What's going on?*
 
-Well if you remember correctly we used the cloned fedora image which has the quemu-guest-agent installed. But when we use a `masquerade{}` deployment we are, of course, not interested in the IP assigned to the host. In fact, we are using this so we can use a private, non-routable range and "hide" behind our masquearded range (the 10.128 range). But the agent is trying to be helpful and is telling OpenShift the IP it *thinks* we want. It's just doing its job!
+Well if you remember correctly we used the cloned fedora image which has the qemu-guest-agent installed. But when we use a `masquerade{}` deployment we are, of course, not interested in the IP assigned to the host. In fact, we are using this so we can use a private, non-routable range and "hide" behind our masqueraded range (the 10.128 range). But the agent is trying to be helpful and is telling OpenShift the IP it *thinks* we want.
 
 So, what do we do?
 
-If you recall all VMs are managed by pods (this is OpenShift afterall!) and the pod manages the networking. So we can ask the pod associated with the VM for the actual IP ranges being managed here. It's easy ... first find the name of the `launcher` pod associated with this instance:
+If you recall, all VMs are managed by pods, and the pod manages the networking. So we can ask the pod associated with the VM for the actual IP ranges being managed here. It's easy ... first find the name of the `launcher` pod associated with this instance:
 
 ~~~bash
 $ oc get pods | grep fc31-podnet
@@ -111,12 +111,20 @@ virt-launcher-fc31-podnet-t9w8w             1/1     Running     0          62m
 Then let's ask check with the *pod* for the actual IPs it is managing for the VM:
 
 ~~~bash
- $ oc describe pod/virt-launcher-fc31-podnet-t9w8w | grep ip -A 1
+ $ oc describe pod/virt-launcher-fc31-podnet-t9w8w | grep -A 11 networks-status
+ Annotations:  k8s.v1.cni.cncf.io/networks-status:
+                [{
+                    "name": "openshift-sdn",
+                    "interface": "eth0",
                     "ips": [
-                        "10.128.2.27"
+                        "10.128.2.56"
+                    ],
+                    "dns": {},
+                    "default-route": [
+                        "10.128.2.1"
+                    ]
+                }]
 ~~~
-
-There it is! 
 
 As this lab guide is being hosted within the same cluster, you should be able to ping and connect into this VM directly from the terminal window on this IP. And when we connect to the guest we will be able see that the IP assigned to the NIC address is indeed different as it's being masqueraded by the underlying host:
 
@@ -149,13 +157,13 @@ Connection to 10.128.2.27 closed.
 $
 ~~~
 
-And again, if you ask OpenShift for the IP, the qemu-guest-agent supplies the *actual* IP, just like it's designed to do.
+And again, if you ask OpenShift for the IP, the qemu-guest-agent supplies the *actual* IP that the VM is set to, just like it's designed to do.
 
 ~~~bash
 [~] $ oc get vmi/fc31-podnet
 NAME          AGE   PHASE     IP            NODENAME
 fc31-podnet   74m   Running   10.0.2.2/24   ocp4-worker2.cnv.example.com
-~~~ 
+~~~
 
 > **NOTE**: If you're not using the guide as part of the self-hosted instructions you'll only be able to access this node directly from that IP if you're connected to one of the CoreOS machines, you can jump to one of those machines from the bastion, but the next instructions will void this requirement.
 
@@ -196,7 +204,7 @@ $ oc create route edge --service=fc31-service
 route.route.openshift.io/fc31-service created
 ~~~
 
-And view the route
+And view the route:
 
 ~~~bash
 $ oc get routes

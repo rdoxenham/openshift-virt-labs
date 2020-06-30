@@ -20,7 +20,7 @@ $ oc describe vmi rhel8-server-nfs | egrep -i '(eviction|migration)'
   Migration Method:  LiveMigration
 ~~~
 
-The easiest way to initiate a migration is to create an `VirtualMachineInstanceMigration` object in the cluster directly against the `vmi` we want to migrate. But wait! Once we create this object it will trigger the migration, so first, let's review what it looks like and set up our tools to watch the process:
+The easiest way to initiate a migration is to create an `VirtualMachineInstanceMigration` object in the cluster directly against the `vmi` we want to migrate. But wait! Once we create this object it will trigger the migration, so first, let's review what it looks like:
 
 ~~~
 apiVersion: kubevirt.io/v1alpha3
@@ -31,13 +31,7 @@ spec:
   vmiName: rhel8-server-nfs
 ~~~
 
-It's really quite simple, we create a `VirtualMachineInstanceMigration` object and reference the `LiveMigratable ` instance we want to migrate: `rhel8-server-nfs`. In the lower terminal start a watch command for the migration job; it will come back with an `Error` until you launch the job:
-
-~~~bash
-$ watch -n1 oc get virtualmachineinstancemigration/migration-job -o yaml
-~~~
-
-In the top terminal let's launch the migration:
+It's really quite simple, we create a `VirtualMachineInstanceMigration` object and reference the `LiveMigratable ` instance we want to migrate: `rhel8-server-nfs`.  Let's apply this configuration:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -52,9 +46,11 @@ EOF
 virtualmachineinstancemigration.kubevirt.io/migration-job created
 ~~~
 
-In your watch you should see the job's phases change to reflect the progress. First it will show `phase: Scheduling` 
+Now let's watch the migration job in action. First it will show `phase: Scheduling` 
 
 ~~~bash
+$ watch -n1 oc get virtualmachineinstancemigration/migration-job -o yaml
+
 Every 1.0s: oc get virtualmachineinstancemigration/migration-job -o yaml                 Fri Mar 20 00:33:35 2020
 
 apiVersion: kubevirt.io/v1alpha3
@@ -88,7 +84,7 @@ NAME               AGE   PHASE     IP                  NODENAME
 rhel8-server-nfs   24h   Running   192.168.123.62/24   ocp4-worker2.cnv.example.com
 ~~~
 
-As you can see Live Migration in OpenShift virtualisation is quite easy. If you have time try some other exmaples. Perhaps start a ping and migrate the machine back. Do you see anything in the ping to indicate the process?
+As you can see Live Migration in OpenShift virtualisation is quite easy. If you have time, try some other examples. Perhaps start a ping and migrate the machine back. Do you see anything in the ping to indicate the process?
 
 > **NOTE**: If you try and run the same migration job it will report `unchanged`. To run a new job, run the same example as above, but change the job name in the metadata section to something like `name: migration-job2`
 
@@ -176,7 +172,7 @@ EOF
 nodemaintenance.kubevirt.io/worker2-maintenance created
 ~~~
 
-> **NOTE**: You may need to modify the above command to specify `worker1` if your virtual machine is currently running on the first worker. Also note that you **may** lose your browser based web terminal, and you'll need to wait a few seconds for it to become accessible again. 
+> **NOTE**: You may need to modify the above command to specify `worker1` if your virtual machine is currently running on the first worker. Also note that you **may** lose your browser based web terminal, and you'll need to wait a few seconds for it to become accessible again (try refreshing your browser).
 
 Now let's check the status of our environment:
 
@@ -197,9 +193,7 @@ NAME               AGE     PHASE     IP                  NODENAME
 rhel8-server-nfs   3h23m   Running   192.168.123.62/24   ocp4-worker1.cnv.example.com
 ~~~
 
-
-
-We can remove the maintenance flag by simply deleting the `NodeMaintenance` object:
+Note that the VM has been automatically live migrated back to the first worker, as per the `EvictionStrategy`. We can remove the maintenance flag by simply deleting the `NodeMaintenance` object:
 
 ~~~bash
 $ oc get nodemaintenance
@@ -214,4 +208,4 @@ NAME                           STATUS   ROLES    AGE    VERSION
 ocp4-worker2.cnv.example.com   Ready    worker   6h2m   v1.17.1
 ~~~
 
-Note the removal of the `SchedulingDisabled` annotation on the 'STATUS' column, also note that just because this node has become active again it doesn't mean that the virtual machine will 'fail back' to it.
+Note the removal of the `SchedulingDisabled` annotation on the '**STATUS**' column, also note that just because this node has become active again it doesn't mean that the virtual machine will 'fail back' to it.

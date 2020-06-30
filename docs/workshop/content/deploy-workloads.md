@@ -231,14 +231,16 @@ Then connect to it and track back the link - here you'll need to adjust the comm
 To do this we need to get to one of our workers, so first jump to the bastion:
 
 ~~~bash
-$ ssh root@ocp4-bastion
-(password is "redhat")
+$ oc debug node/ocp4-worker1.cnv.example.com
+Starting pod/ocp4-worker1cnvexamplecom-debug ...
+To use host binaries, run `chroot /host`
+Pod IP: 192.168.123.104
+If you don't see a command prompt, try pressing enter.
 
-# ssh core@ocp4-worker1
-(no password required)
+sh4.2# chroot /host
 
-[core@ocp4-worker1 ~]$ export ifindex=4
-[core@ocp4-worker1 ~]$ ip -o link | grep ^$ifindex: | sed -n -e 's/.*\(veth[[:alnum:]]*@if[[:digit:]]*\).*/\1/p'
+sh4.4# export ifindex=4
+sh4.4# ip -o link | grep ^$ifindex: | sed -n -e 's/.*\(veth[[:alnum:]]*@if[[:digit:]]*\).*/\1/p'
 veth1bc05f9b@if5
 ~~~
 > **NOTE**: You may have to adjust both the connection to worker1 or worker2, and the ifindex for the commands above to work properly.
@@ -246,7 +248,7 @@ veth1bc05f9b@if5
 Therefore, the other side of the link, in the example above is **"veth1bc05f9b"**. You can then see that this is attached to **"br1"** as follows-
 
 ~~~bash
-[core@ocp4-worker1 ~]# ip link show dev veth1bc05f9b
+sh4.4# ip link show dev veth1bc05f9b
 4: veth1bc05f9b@if5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master br1 state UP mode DEFAULT group default
     link/ether 62:7c:b2:db:8a:9b brd ff:ff:ff:ff:ff:ff link-netnsid 12
 ~~~
@@ -257,16 +259,15 @@ Or visually represented:
 
 <img src="img/veth-pair.png" />
 
-Exit the worker and baston shells before proceeding:
+Exit the debug shell(s) before proceeding:
 
 ~~~bash
-[core@ocp4-worker1 ~]$ exit
-logout
-Connection to ocp4-worker1 closed.
+sh4.4# exit
+exit
+sh4.2# exit
+exit
 
-[root@ocp4-bastion ~]# exit
-logout
-Connection to ocp4-bastion closed.
+Removing debug pod ...
 
 $ oc whoami
 system:serviceaccount:workbook:cnv
@@ -275,7 +276,7 @@ $ oc project default
 Already on project "default" on server "https://172.30.0.1:443".
 ~~~
 
-Now that we have the NFS instance running, let's do the same for the hostpath setup we created. This is essentially the same as our NFS instance, except we reference the `rhel8-hostpath` PVC:
+Now that we have the NFS instance running, let's do the same for the **hostpath** setup we created. This is essentially the same as our NFS instance, except we reference the `rhel8-hostpath` PVC:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -439,16 +440,17 @@ $ oc describe pod virt-launcher-rhel8-server-hostpath-nb4bh | awk -F// '/Contain
 ba06cc69e0dbe376dfa0c8c72f0ab5513f31ab9a7803dd0102e858c94df55744
 ~~~
 
-Now we can `ssh` to the worker node via the bastion host, remembering to use the one from the above command:
+Now we can check on the worker node itself, remembering to adjust these commands for the worker that your hostpath based VM is running on, and the container ID from the above:
 
 ~~~bash
-$ ssh root@ocp4-bastion
-(password is "redhat")
+$ oc debug node/ocp4-worker2.cnv.example.com
+Starting pod/ocp4-worker2cnvexamplecom-debug ...
+To use host binaries, run `chroot /host`
+Pod IP: 192.168.123.105
+If you don't see a command prompt, try pressing enter.
 
-# ssh core@ocp4-worker2
-(no password required)
-
-[core@ocp4-worker2 ~]$ sudo crictl inspect ba06cc69e0dbe376dfa0c8c72f0ab5513f31ab9a7803dd0102e858c94df55744 | grep -A4 rhel8-hostpath
+sh4.2# chroot /host
+sh4.4# crictl inspect ba06cc69e0dbe376dfa0c8c72f0ab5513f31ab9a7803dd0102e858c94df55744 | grep -A4 rhel8-hostpath
         "containerPath": "/var/run/kubevirt-private/vmi-disks/rhel8-hostpath",
         "hostPath": "/var/hpvolumes/pvc-77e486ea-af9a-4fb5-bc7d-1f21a59ed21a",
         "propagation": "PROPAGATION_PRIVATE",
@@ -461,13 +463,12 @@ Here you can see that the container has been configured to have a `hostPath` fro
 Don't forget to exit (twice) before proceeding:
 
 ~~~bash
-[core@ocp4-worker2 ~]$ exit
-logout
-Connection to ocp4-worker2 closed.
+sh4.4# exit
+exit
+sh4.2# exit
+exit
 
-[root@ocp4-bastion ~]# exit
-logout
-Connection to 192.168.123.100 closed.
+Removing debug pod ...
 
 $ oc whoami
 system:serviceaccount:workbook:cnv
@@ -475,6 +476,5 @@ system:serviceaccount:workbook:cnv
 [~] $ oc project default
 Already on project "default" on server "https://172.30.0.1:443".
 ~~~
-
 
 

@@ -1,13 +1,19 @@
 Now that we've got OpenShift virtualisation deployed, let's configure storage. 
 
-First, switch back to the "Terminal" view in your lab enviornment.
+First, switch back to the "**Terminal**" view in your lab environment.
 
 We're going to setup two different types of storage in this section, firstly standard NFS shared storage, and also `hostpath` storage which uses the hypervisor's local disks, somewhat akin to ephemeral storage provided by OpenStack.
 
->**NOTE** Continue to run these commands against the Default project. If you are unsure, run `$ oc project default`
->To ensure the project is correct. You may be already on it.
+First, make sure you're in the default project:
 
-First let's setup a storage class for NFS backed volumes, utilising the `kubernetes.io/no-provisioner` as the provisioner; to be clear this mean **no** dynamic provisioning of volumes on demand of a PVC:
+~~~bash
+$ oc project default
+Now using project "default" on server "https://172.30.0.1:443".
+~~~
+
+>**NOTE**: If you don't use the default project for the next few lab steps, it's likely that you'll run into some errors - some resources are scoped, i.e. aligned to a namespace, and others are not. Ensuring you're in the default namespace now will ensure that all of the coming lab steps should flow together.
+
+Now let's setup a storage class for NFS backed volumes, utilising the `kubernetes.io/no-provisioner` as the provisioner; to be clear this mean **no** dynamic provisioning of volumes on demand of a PVC:
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -249,17 +255,9 @@ We'll use this NFS-based RHEL8 image when we provision a virtual machine in one 
 
 ## Hostpath Storage
 
-Now let's create a second storage type based on `hostpath` storage. We'll follow a similar approach to setting this up, but we won't be using shared storage, so all of the data that we create on hostpath type volumes is essentially ephemeral. As we're not using a pre-configured shared storage pool for this we need to ask OpenShift's `MachineConfigOperator` to do some work for us direclt on our worker nodes:
+Now let's create a second storage type based on `hostpath` storage. We'll follow a similar approach to setting this up, but we won't be using shared storage, so all of the data that we create on hostpath type volumes is essentially ephemeral, and resides on the local disk of the hypervisors (OpenShift worker's) themselves. As we're not using a pre-configured shared storage pool for this we need to ask OpenShift's `MachineConfigOperator` to do some work for us directly on our worker nodes.
 
-> **NOTE**: This will take a few minutes to reflect on the cluster, and causes the worker nodes to reboot. You'll witness a disruption on the lab guide functionality where you will see the consoles hang and/or display a "Closed" image. In some cases we have needed to refresh the entire browser. *If that happens, when you come back to your terminals don't forget to do `$ oc project  default`*
-> 
-<img src="img/disconnected-terminal.png"/>
-
-> It should automatically reconnect but if it doesn't, you can try reloading the terminal by clicking the three bars in the top right hand corner:
-
-<img src="img/reload-terminal.png"/>
-
-Ok, now you know that, let's continue!
+Run the following in the terminal window - it will generate a new `MachineConfig` that the cluster will enact, recognising that we only match on the worker nodes (`machineconfiguration.openshift.io/role: worker`):
 
 ~~~bash
 $ cat << EOF | oc apply -f -
@@ -295,11 +293,38 @@ EOF
 machineconfig.machineconfiguration.openshift.io/50-set-selinux-for-hostpath-provisioner-worker created
 ~~~
 
-> **NOTE**: This is where your system will disconnect; give it a few minutes and refresh your browser.
+This deploys a new `systemd` unit file on the worker nodes to create a new directory at `/var/hpvolumes` and relabels it with the correct SELinux contexts at boot-time, ensuring that OpenShift can leverage that directory for local storage. We do this via a `MachineConfig` as the CoreOS machine is immutable. You should first start to witness OpenShift starting to drain the worker nodes and disable scheduling on them so the nodes can be rebooted safely:
 
-This deploys a new `systemd` unit file on the worker nodes to create a new directory at `/var/hpvolumes` and relabels it with the correct SELinux contexts at boot-time, ensuring that OpenShift can leverage that directory for local storage. We do this via a `MachineConfig` as the CoreOS machine is immutable.
+~~~bash
+$ oc get nodes
+NAME                           STATUS                        ROLES    AGE   VERSION
+ocp4-master1.cnv.example.com   Ready                         master   16h   v1.17.1+912792b
+ocp4-master2.cnv.example.com   Ready                         master   16h   v1.17.1+912792b
+ocp4-master3.cnv.example.com   Ready                         master   16h   v1.17.1+912792b
+ocp4-worker1.cnv.example.com   Ready                         worker   16h   v1.17.1+912792b
+ocp4-worker2.cnv.example.com   NotReady,SchedulingDisabled   worker   16h   v1.17.1+912792b
+~~~
 
-Wait for the following command to return `True` as it indicates when the `MachineConfigPool`'s worker has been updated with the latest config requested. 
+
+
+> **NOTE**: This will take a few minutes to reflect on the cluster, and causes the worker nodes to reboot. You'll witness a disruption on the lab guide functionality where you will see the consoles hang and/or display a "Closed" image. In some cases we have needed to refresh the entire browser.
+>
+> <img src="img/disconnected-terminal.png"/>
+
+> It should automatically reconnect but if it doesn't, you can try reloading the terminal by clicking the three bars in the top right hand corner:
+
+<img src="img/reload-terminal.png"/>
+
+
+
+When you're able to issue commands again, make sure you're in the correct namespace again:
+
+~~~bash
+$ oc project default
+Now using project "default" on server "https://172.30.0.1:443".
+~~~
+
+Now wait for the following command to return `True` as it indicates when the `MachineConfigPool`'s worker has been updated with the latest `MachineConfig` requested: 
 
 ~~~bash
 $ oc get machineconfigpool worker -o=jsonpath="{.status.conditions[?(@.type=='Updated')].status}{\"\n\"}"
@@ -311,9 +336,6 @@ Now we can set the HostPathProvisioner configuration itself, i.e. telling the op
 
 
 ~~~bash
-$ oc project default
-Now using project "default" on server "https://172.30.0.1:443".
-
 $ cat << EOF | oc apply -f -
 apiVersion: hostpathprovisioner.kubevirt.io/v1alpha1
 kind: HostPathProvisioner
@@ -388,7 +410,7 @@ NAME                      READY   STATUS    RESTARTS   AGE
 importer-rhel8-hostpath   1/1     Running   0          88s
 ~~~
 
-> **Note**: Didn't see any pods? You likely just missed it. To be sure the PV was created continue to the next command.
+> **NOTE**: You can watch the output of this importer pod with `$ oc logs -fimporter-rhel8-hostpath`.  Didn't see any pods? You likely just missed it. To be sure the PV was created continue to the next command.
 
 Once that pod has finished let's check the status of the PV's:
 
@@ -439,32 +461,33 @@ Events:            <none>
 
 There's a few important details here worth noting, namely the `kubevirt.io/provisionOnNode` annotation, and the path of the volume on that node. In the example above you can see that the volume was provisioned on *ocp4-worker1.cnv.example.com*, the first of our two worker nodes (in your environment it may have been scheduled onto the second worker). 
 
-Let's look more closely to verify that this truly has been created for us.
+Let's look more closely to verify that this truly has been created for us on the designated worker.
 
-> **NOTE**: You may have to substitute `ocp4-worker1` with `ocp4-worker2` if your hostpath volume was scheduled to worker2. You'll need to also match the UUID to the one that was generated by your PVC. Also note that the username for connecting to the worker nodes is 'core' rather than root - these machines run Red Hat Enterprise Linux CoreOS. The ssh-key from the bastion has already been injected during the initial deployment of the cluster, hence no password required.
+> **NOTE**: You may have to substitute `ocp4-worker1` with `ocp4-worker2` if your hostpath volume was scheduled to worker2. You'll need to also match the UUID to the one that was generated by your PVC. 
 
 ~~~bash
-$ ssh root@ocp4-bastion
-(password is "redhat")
+$ oc debug node/ocp4-worker1.cnv.example.com
+Starting pod/ocp4-worker1cnvexamplecom-debug ...
+To use host binaries, run `chroot /host`
+Pod IP: 192.168.123.104
+If you don't see a command prompt, try pressing enter.
 
-# ssh core@ocp4-worker1
-(...)
+sh4.2# chroot /host
 
-$ ls -l /var/hpvolumes/pvc-8684d563-4e28-418d-b8c4-aa1b047fb966
+sh4.4# ls -l /var/hpvolumes/pvc-8684d563-4e28-418d-b8c4-aa1b047fb966
 total 41943044                                                                                                
 -rwxr-xr-x. 1 root root 42949672960 Mar 17 08:54 disk.img
 
-$ file /var/hpvolumes/pvc-8684d563-4e28-418d-b8c4-aa1b047fb966/disk.img
+sh4.4# file /var/hpvolumes/pvc-8684d563-4e28-418d-b8c4-aa1b047fb966/disk.img
 /var/hpvolumes/pvc-8684d563-4e28-418d-b8c4-aa1b047fb966/disk.img: DOS/MBR boot sector
 
-$ logout
-# logout
+sh4.4# exit
+sh4.2# exit
+Removing debug pod ...
 
 $ oc whoami
 system:serviceaccount:workbook:cnv
 ~~~
 
 
-Make sure that you've executed the two `logout` commands above - we need to make sure that you're back to the right shell before continuing. 
-
-Check this by issuing the `oc whoami` command at the end to ensure you are not on the bastion host.
+Make sure that you've executed the two `exit` commands above - we need to make sure that you're back to the right shell before continuing, and aren't still inside of the debug pod.

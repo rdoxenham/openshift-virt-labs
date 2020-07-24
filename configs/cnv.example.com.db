@@ -19,6 +19,7 @@ ocp4-master2     IN  A       192.168.123.102
 ocp4-master3     IN  A       192.168.123.103
 ocp4-worker1	 IN  A       192.168.123.104
 ocp4-worker2	 IN  A       192.168.123.105
+ocp4-worker3	 IN  A       192.168.123.106
 openshift	 IN  A       192.168.123.100
 
 api		 IN  A       192.168.123.100

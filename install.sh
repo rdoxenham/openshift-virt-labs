@@ -9,11 +9,11 @@ SSH_PUB_BASTION=~/.ssh/id_rsa.pub
 PULL_SECRET=''
 
 # Set the locations of the images you want to use...
-RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.4/latest/rhcos-4.4.3-x86_64-installer-initramfs.x86_64.img
-RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.4/latest/rhcos-4.4.3-x86_64-installer-kernel-x86_64
-RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.4/latest/rhcos-4.4.3-x86_64-metal.x86_64.raw.gz
-OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.4/openshift-install-linux.tar.gz
-OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.4/openshift-client-linux.tar.gz
+RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-installer-initramfs.x86_64.img
+RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-installer-kernel-x86_64
+RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-metal.x86_64.raw.gz
+OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-install-linux.tar.gz
+OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-client-linux.tar.gz
 
 # You will need either a RHEL8 or CentOS8 image
 RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2
@@ -75,15 +75,7 @@ sudo -E virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-comma
 
 echo -e "\n\n[INFO] Setting the OpenShift virtual machine definitions in libvirt...\n"
 
-# https://bugzilla.redhat.com/show_bug.cgi?id=1806532
-CPU_FLAGS=" "
-lscpu | grep AuthenticAMD > /dev/null 2>&1
-if [ "$?" -eq 0 ]
-then
-	CPU_FLAGS="--cpu=host-passthrough,disable=rdrand"
-else
-	CPU_FLAGS="--cpu=host-passthrough"
-fi
+CPU_FLAGS="--cpu=host-passthrough"
 
 mkdir -p node-configs/
 sudo virt-install --virt-type kvm --ram 4096 --vcpus 2 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:22:33:44 --boot hd,network --name ocp4-bastion --print-xml 1 > node-configs/ocp4-bastion.xml
@@ -209,6 +201,11 @@ sed -i "s/PULL_SECRET/$PULL_SECRET/g" pre-install-config.yaml
 scp -o StrictHostKeyChecking=no pre-install-config.yaml root@192.168.123.100:/root/install-config.yaml
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 'sed -i "s|BAST_SSHKEY|$(cat /root/.ssh/id_rsa.pub)|g" install-config.yaml'
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
+
+ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create manifests"
+scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
+ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
+
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create ignition-configs"
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "cp /root/ocp-install/*.ign /var/www/html/ && restorecon -Rv /var/www/html && chmod -R 777 /var/www/html"
 
@@ -257,7 +254,7 @@ sleep 300
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "export KUBECONFIG=ocp-install/auth/kubeconfig && for csr in \$(oc -n openshift-machine-api get csr | awk '/Pending/ {print \$1}'); do oc adm certificate approve \$csr;done"
 sleep 180
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "export KUBECONFIG=ocp-install/auth/kubeconfig && for csr in \$(oc -n openshift-machine-api get csr | awk '/Pending/ {print \$1}'); do oc adm certificate approve \$csr;done"
-ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install wait-for install-complete"
+ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install wait-for install-complete --log-level=debug"
 
 echo -e "\n\n[INFO] Enabling the Image Registry on NFS...\n"
 

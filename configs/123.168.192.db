@@ -19,4 +19,5 @@
 103      IN  PTR     ocp4-master3.cnv.example.com.
 104      IN  PTR     ocp4-worker1.cnv.example.com.
 105      IN  PTR     ocp4-worker2.cnv.example.com.
+106      IN  PTR     ocp4-worker3.cnv.example.com.
 

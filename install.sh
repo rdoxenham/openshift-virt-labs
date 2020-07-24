@@ -18,6 +18,9 @@ OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/o
 # You will need either a RHEL8 or CentOS8 image
 RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2
 
+# Configure if you want to be able to support OpenShift Container Storage (3rd worker + extra volumes) - default is FALSE
+OCS_SUPPORT=false
+
 echo "=============================="
 echo "KubeVirt Lab Deployment Script"
 echo -e "==============================\n"
@@ -35,6 +38,14 @@ do
 		exit 1
 	fi
 done
+
+LOW_MEMORY=false
+echo -e "\n[INFO] Checking system for available memory...\n"
+if [[ 100 -ge $(free -g | awk '/Mem/ {print $2;}') ]]; then
+	echo -e "\n[WARN] This system doesn't have the optimum amount of memory and your mileage may vary!\n\n\n"
+	sleep 10
+	LOW_MEMORY=true
+fi
 
 echo -e "\n\n[INFO] Installing necessary packages on the hypervisor...\n"
 sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
@@ -55,6 +66,10 @@ do
 	sudo qemu-img create -f qcow2 /var/lib/libvirt/images/ocp4-$i.qcow2 80G
 done
 
+if $OCS_SUPPORT; then
+	sudo qemu-img create -f qcow2 /var/lib/libvirt/images/ocp4-worker3.qcow2 80G
+fi
+
 echo -e "\n\n[INFO] Downloading and customising the RHEL8 KVM guest image to become bastion host...\n"
 
 if [ ! -f /var/lib/libvirt/images/rhel8-kvm.qcow2 ]; then
@@ -73,9 +88,21 @@ sudo -E virt-copy-in -a /var/lib/libvirt/images/ocp4-bastion.qcow2 configs/ifcfg
 sudo -E virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command "mkdir -p /root/.ssh/ && chmod -R 0700 /root/.ssh/"
 sudo -E virt-customize -a /var/lib/libvirt/images/ocp4-bastion.qcow2 --run-command "restorecon -Rv /root/.ssh/"
 
+echo -e "\n\n[INFO] Defining empty storage containers for OCS (even if not used)...\n"
+for i in 1 2 3; do
+        for j in 1 2; do
+                sudo qemu-img create -f qcow2 /var/lib/libvirt/images/ocp4-worker$i-osd$j.qcow2 100G
+        done
+done
+
 echo -e "\n\n[INFO] Setting the OpenShift virtual machine definitions in libvirt...\n"
 
 CPU_FLAGS="--cpu=host-passthrough"
+
+WORKER_MEMORY=32768
+if $LOW_MEMORY; then
+	WORKER_MEMORY=16384
+fi
 
 mkdir -p node-configs/
 sudo virt-install --virt-type kvm --ram 4096 --vcpus 2 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:22:33:44 --boot hd,network --name ocp4-bastion --print-xml 1 > node-configs/ocp4-bastion.xml
@@ -83,13 +110,18 @@ sudo virt-install --virt-type kvm --ram 8192 --vcpus 4 --os-variant rhel8.1 --di
 sudo virt-install --virt-type kvm --ram 16384 --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master1.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:19:d7:9c --boot hd,network --name ocp4-master1 --print-xml 1 > node-configs/ocp4-master1.xml
 sudo virt-install --virt-type kvm --ram 16384 --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:60:66:89 --boot hd,network --name ocp4-master2 --print-xml 1 > node-configs/ocp4-master2.xml
 sudo virt-install --virt-type kvm --ram 16384 --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master3.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:9e:5c:3f --boot hd,network --name ocp4-master3 --print-xml 1 > node-configs/ocp4-master3.xml
-sudo virt-install --virt-type kvm --ram 16384 --vcpus 8 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker1.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:47:4d:83 --network network:ocp4-net,mac=52:54:00:47:5e:94 --boot hd,network --name ocp4-worker1 --print-xml 1 > node-configs/ocp4-worker1.xml
-sudo virt-install --virt-type kvm --ram 16384 --vcpus 8 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:b2:96:0e --network network:ocp4-net,mac=52:54:00:47:ad:1f --boot hd,network --name ocp4-worker2 --print-xml 1 > node-configs/ocp4-worker2.xml
+sudo virt-install --virt-type kvm --ram $WORKER_MEMORY --vcpus 16 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker1.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:47:4d:83 --network network:ocp4-net,mac=52:54:00:47:5e:94 --boot hd,network --name ocp4-worker1 --print-xml 1 > node-configs/ocp4-worker1.xml
+sudo virt-install --virt-type kvm --ram $WORKER_MEMORY --vcpus 16 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:b2:96:0e --network network:ocp4-net,mac=52:54:00:47:ad:1f --boot hd,network --name ocp4-worker2 --print-xml 1 > node-configs/ocp4-worker2.xml
 
 for i in bastion bootstrap master1 master2 master3 worker1 worker2
 do
 	sudo virsh define node-configs/ocp4-$i.xml
 done
+
+if $OCS_SUPPORT; then
+	sudo virt-install --virt-type kvm --ram $WORKER_MEMORY --vcpus 16 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker3.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker3-osd1.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker3-osd2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:b2:21:66 --network network:ocp4-net,mac=52:54:00:41:be:22 --boot hd,network --name ocp4-worker3 --print-xml 1 > node-configs/ocp4-worker3.xml
+	sudo virsh define node-configs/ocp4-worker3.xml
+fi
 
 echo -e "\n[INFO] Starting the bastion host and copying in our ssh keypair...\n"
 
@@ -231,6 +263,11 @@ for i in bootstrap master1 master2 master3 worker1 worker2
 do
   	sudo virsh start ocp4-$i
 done
+
+if $OCS_SUPPORT; then
+	sudo virsh start ocp4-worker3
+fi
+
 sleep 20
 
 echo -e "\n\n[INFO] Waiting for OpenShift installation to complete...\n"

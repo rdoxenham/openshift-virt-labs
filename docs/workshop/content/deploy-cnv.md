@@ -1,36 +1,40 @@
-At the time of writing, OpenShift virtualisation is available as both upstream (**KubeVirt**) and downstream releases, but is currently only in "[technology preview](https://access.redhat.com/support/offerings/techpreview)" status from Red Hat. The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub (Marketplace) in the web-console. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here.
+At the time of writing, OpenShift virtualisation is available as both upstream (**KubeVirt**) and downstream releases. **With the release of version 2.4 OpenShift Virtualization is now fully supported by Red Hat!** 
+
+The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub (Marketplace) in the web-console. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here.
 
 From within the lab guide window you'll see a button in the middle at the top that allows you to switch between the terminal and console options. Select the console and you should see the OpenShift dashboard:
 
 <img  border="1" src="img/console-button.png"/>
 
 
-
 > **NOTE**: You can use the dashboard in a separate tab should you wish, you can use this link: https://console-openshift-console.apps.cnv.example.com/dashboards and you'll find the kubeadmin password in */root/ocp-install/auth/kubeadmin-password* on node *192.168.123.100*.
 
 Next, navigate to the top-level '**Operators**' menu entry, and select '**OperatorHub**'. This lists all of the available operators that you can install from the Red Hat Marketplace. Simply start typing '**virtualization**' in the search box and you should see an entry called "Container-native virtualization". Simply select it and you'll see a window that looks like the following:
 
-<img  border="1" src="img/cnv-operator.png"/>
+<img  border="1" src="img/ocp-virt-operator-install.png"/>
 
 
 Next you'll want to select the 'Install' button, which will take you to a second window where you'll be creating an 'Operator Subscription'. Leave the defaults here as they'll automatically select the latest version of OpenShift virtualisation and will allow the software to be installed automatically:
 
-<img  border="1" src="img/cnv-subscribe.png"/>
+<img  border="1" src="img/ocp-virt-operator-install-details.png"/>
 
 
 
-Make sure that the namespace it will be installed to is "**openshift-cnv**" - it should be the default entry, but make sure. When you're ready, press the **'Subscribe'** button. After a minute or two you'll see that the subscription has been configured successfully:
+Make sure that the namespace it will be installed to is "**openshift-cnv**" - it should be the default entry, but make sure. When you're ready, press the **'Install'** button. After a minute or two you'll see that the subscription has been configured successfully:
 
-<img  border="1" src="img/cnv-installed.png"/>
+<img  border="1" src="img/ocp-virt-operatore-install-success.png"/>
 
-Next we need to actually deploy all of the CNV components that this subscription provides. Select the "**Container-native virtualization**" link under the '**Name**' column, and you'll be presented with the following:
+Next we need to actually deploy all of the CNV components that this subscription provides. Select the "**OpenShift Virtualization**" link under the '**Name**' column, and you'll be presented with the following:
 
-<img  border="1" src="img/install-hco.png"/>
+<img  border="1" src="img/ocp-virt-hco-1.png"/>
 
-From here, select '**Create Instance**' on the '**CNV Operator Deployment**' button; this will deploy all of the necessary components that are required to support OpenShift virtualisation. The next page will show you a yaml edit box - we can leave this as the defaults and select '**Create**' at the bottom. Whilst this does its thing, you can move to the '**Workloads**' --> '**Pods**' menu entry and watch it start all of its resources:
+From here, select '**Create Instance**' on the '**CNV Operator Deployment**' button; this will deploy all of the necessary components that are required to support OpenShift virtualisation. The next page will show you the operators details - we can leave this as the defaults and select '**Create**' at the bottom. 
 
-<img  border="1" src="img/cnv-pods.png"/>
+<img  border="1" src="img/ocp-virt-hco-2.png">
 
+Whilst this does its thing, you can move to the '**Workloads**' --> '**Pods**' menu entry and watch it start all of its resources (select "Pending" from the pods filter):
+
+<img  border="1" src="img/ocp-virt-hco-4.png"/>
 
 
 You can also return to the 'terminal' tab in your hosted lab guide and watch via the CLI:
@@ -52,8 +56,8 @@ You will know the process is complete when you can return to the top terminal an
 
 ~~~bash
 $ oc get csv -n openshift-cnv
-NAME                                      DISPLAY                           VERSION   REPLACES   PHASE
-kubevirt-hyperconverged-operator.v2.3.0   Container-native virtualization   2.3.0                Succeeded
+NAME                                      DISPLAY                    VERSION   REPLACES   PHASE
+kubevirt-hyperconverged-operator.v2.4.0   OpenShift Virtualization   2.4.0                Succeeded
 ~~~
 
 If you do not see `Succeeded` in the `PHASE` column then the deployment may still be progressing, or has failed. You will not be able to proceed until the installation has been successful. Once the `PHASE` changes to `Succeeded` you can validate that the required resources and the additional components have been deployed across the nodes. First let's check the pods deployed in the `openshift-cnv` namespace:
@@ -169,8 +173,8 @@ No resources found in openshift-cnv namespace.
 
 ### Viewing the OpenShift virtualisation Dashboard
 
-When OpenShift virtualisation is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift virtualisation, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to "**Workloads**" --> "**Virtual Machines**" on the left-hand side panel and you should see the new snap-in component for OpenShift virtualisation but with no Virtual Machines running.
+When OpenShift virtualisation is deployed it adds additional components to OpenShift's web-console so you can interact with objects and custom resources defined by OpenShift virtualisation, including `VirtualMachine` types. If you select the `Console` button at the top of this pane you should see the web-console displayed. You can now navigate to "**Workloads**" --> "**Virtualization**" on the left-hand side panel and you should see the new snap-in component for OpenShift virtualisation but with no Virtual Machines running.
 
-<img src="img/cnv-dashboard.png"/>
+<img src="img/ocpvirt-dashboard.png"/>
 
 > **NOTE**: Please don't try and create any virtual machines just yet, we'll get to that shortly!

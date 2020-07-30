@@ -28,8 +28,4 @@ modules:
         exit_sign: CNV Console
     console:
         name: Using the console
-        exit_sign: Upgrading CNV
-    upgrading-cnv:
-        name: Upgrading CNV
         exit_sign: Finish Workshop
-

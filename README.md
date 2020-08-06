@@ -1,29 +1,26 @@
-## OpenShift virtualisation Hands-on Lab
+## OpenShift Virtualization Hands-on Lab
 
 **Authors**: [Rhys Oxenham](mailto:roxenham@redhat.com) and [August Simonelli](mailto:asimonel@redhat.com)
 
-Welcome to our hands-on OpenShift virtualisation lab. Right now this repo provides an installation script that builds out an OpenShift 4.4 UPI installation (although the versions can be easily customised) on a single baremetal machine where all of the masters and workers are virtualised. The script also deploys a self-hosted OpenShift virtualisation hands-on self-paced lab guide based on [OpenShift homeroom](https://github.com/openshift-homeroom) - this guide will walk you through deployment of OpenShift virtualisation through to some common usage patterns.
+Welcome to our hands-on OpenShift Virtualization lab. Right now this repo provides an installation script that builds out an OpenShift 4.5 UPI installation (although the versions can be easily customised) on a single baremetal machine where all of the masters and workers are virtualised. The script also deploys a self-hosted OpenShift Virtualization hands-on self-paced lab guide based on [OpenShift homeroom](https://github.com/openshift-homeroom) - this guide will walk you through deployment of OpenShift Virtualization through to some common usage patterns.
 
-We are going to use the official Red Hat downstream components, where **OpenShift virtualisation** is now the official feature name of the packaged up [Kubevirt project](https://kubevirt.io/) within the OpenShift product. For the purposes of this repo and the labs themselves, any reference to "CNV", "Container-native virtualisation" and "OpenShift virtualisation", and "KubeVirt" can be used interchangeably.
+We are going to use the official Red Hat downstream components, where **OpenShift Virtualization** is now the official feature name of the packaged up [Kubevirt project](https://kubevirt.io/) within the OpenShift product. For the purposes of this repo and the labs themselves, any reference to "CNV", "Container-native virtualisation" and "OpenShift Virtualization", and "KubeVirt" can be used interchangeably.
 
 The lab guide runs you through the following tasks -
 
-
 * **Validating the OpenShift deployment**
-* **Deploying OpenShift virtualisation (KubeVirt)**
-* **Setting up Storage for OpenShift virtualisation**
-* **Setting up Networking for OpenShift virtualisation**
+* **Deploying OpenShift Virtualization (KubeVirt)**
+* **Setting up Storage for OpenShift Virtualization**
+* **Setting up Networking for OpenShift Virtualization**
 * **Deploying some RHEL 8 / CentOS 8 / Fedora 31 Test Workloads**
 * **Performing Live Migrations and Node Maintenance**
 * **Utilising network masquerading on pod networking for VM's**
-* **Using the OpenShift Web Console extensions for OpenShift virtualisation**
-* **Upgrading OpenShift virtualisation via the Operator Lifecycle**
-
+* **Using the OpenShift Web Console extensions for OpenShift Virtualization**
 
 
 ### The Environment
 
-As mentioned above, the entire setup is based on a virtualised infrastructure - we rely on a single (relatively powerful) baremetal node for all of this work; the OpenShift masters and workers are virtual machines themselves, and we run any OpenShift virtualisation virtual machines as nested guests. We do this for simplicity and for ease of scaling this type of enablement, as we have full control over the baremetal machine and we can virtualise networks, storage, host everything we need with no bandwidth/latency concerns, and also means we don't have to worry about sharing access to hardware and the potential conflicts that may arise from doing so.
+As mentioned above, the entire setup is based on a virtualised infrastructure - we rely on a single (relatively powerful) baremetal node for all of this work; the OpenShift masters and workers are virtual machines themselves, and we run any OpenShift Virtualization virtual machines as nested guests. We do this for simplicity and for ease of scaling this type of enablement, as we have full control over the baremetal machine and we can virtualise networks, storage, host everything we need with no bandwidth/latency concerns, and also means we don't have to worry about sharing access to hardware and the potential conflicts that may arise from doing so.
 
 The deployment is visualised as follows:
 
@@ -33,14 +30,14 @@ The deployment is visualised as follows:
 
 Here you can see that the admin (or you) runs the `install.sh` script on the baremetal server, and it deploys a number of virtual machines on-top that make up the OpenShift 4.x infrastructure. The deployment script uses the standard "baremetal UPI (user provisioned infrastructure)" model, in that all nodes are somewhat manually provisioned using DHCP/PXE and with no underlying platform integration. This mechanism is slightly more complicated to setup, but is easy to troubleshoot, and the install script takes care of everything for you.
 
-The deployment script then deploys the self-hosted lab guide as a pod on-top of one of the workers and it's that you'll optionally use to follow the step-by-step guide to get familiar with OpenShift virtualisation. The diagram above is somewhat simplified as it omits all of the bastion services, all of the standard OpenShift pods, and also assumes that OpenShift virtualisation has been deployed - the main reason for including OpenShift virtualisation based VM's in the above diagram is to set the context that all VM's launched in the deployment are **nested** guests, i.e. they're virtual machines within virtual machines.
+The deployment script then deploys the self-hosted lab guide as a pod on-top of one of the workers and it's that you'll optionally use to follow the step-by-step guide to get familiar with OpenShift Virtualization. The diagram above is somewhat simplified as it omits all of the bastion services, all of the standard OpenShift pods, and also assumes that OpenShift Virtualization has been deployed - the main reason for including OpenShift Virtualization based VM's in the above diagram is to set the context that all VM's launched in the deployment are **nested** guests, i.e. they're virtual machines within virtual machines.
 
 The bastion host is critical to the deployment for a number of reasons; it provides the following services-
 
 * An **HTTP** server to serve up CoreOS ignition files during PXE  deployment
 * A **DHCP** server to ensure that we get fixed IP allocation, PXE redirection, and DNS assignment
 * A **DNS** (named/bind) server that provides name resolution for *cnv.example.com* and subdomain redirection for **.apps.cnv.example.com* for all deployed application `routes`.
-* An **NFS** server to provide access to shared storage for our `persistent volume claims` when we wish to deploy virtual machines on OpenShift virtualisation, and also to act as the storage platform for our image registry.
+* An **NFS** server to provide access to shared storage for our `persistent volume claims` when we wish to deploy virtual machines on OpenShift Virtualization, and also to act as the storage platform for our image registry.
 * A **squid** proxy server so we can point our client browser to the bastion and get all of the required network access we require to the lab, including terminals, OpenShift web-consoles, and access to any additional applications we deploy through their routes.
 * A **jump** server to connect to the rest of our infrastructure without requiring us to setup */etc/hosts* on our local client, nor import ssh-keys.
 
@@ -60,7 +57,7 @@ To run this course your baremetal machine needs to meet the following requiremen
 In addition to the hardware requirements, there's a number of things that you'll need to populate in the `install.sh` script before you execute it-
 
 * You need to either have **root** access to the baremetal server, or a user with full **sudo** privileges (without a password)
-* The list of image locations that you want to pull - the script by default is set to pull the bleeding edge 4.4 nightlies, which can break, your mileage may vary with these and you may want to play it safe. The parameters to update are `RHCOS_RAMDISK`, `RHCOS_KERNEL`, `RHCOS_RAW`, `OCP_INSTALL` and `OC_CLIENT`. All of these files can be pulled from *mirror.openshift.com*. The filenames are somewhat explanatory, but if you have questions please ask us.
+* The list of image locations that you want to pull - the script could even be used to pull bleeding edge nightlies, which can break, your mileage may vary with these and you may want to play it safe. The parameters to update are `RHCOS_RAMDISK`, `RHCOS_KERNEL`, `RHCOS_RAW`, `OCP_INSTALL` and `OC_CLIENT`. All of these files can be pulled from *mirror.openshift.com*. The filenames are somewhat explanatory, but if you have questions please ask us.
 * The location of a vanilla RHEL8 (or CentOS) KVM image (`RHEL8_KVM`) - This will be downloaded (like the other images) when you run the installer. Note that currently if this file already exists in */var/lib/libvirt/images* then it won't download/overwrite it.
 * The public ssh-key (`SSH_PUB_BASTION`) that you want to inject into the bastion node so we can execute commands against it without worrying about passwords.
 * Your OpenShift *pull secret* so we can pull OpenShift images (`PULL_SECRET`). This is a **json** formatted string with all of the necessary authentication and authorisation secrets and is linked to your specific username/email-address. This can be downloaded from [cloud.redhat.com](https://cloud.redhat.com/) (with instructions [here](https://access.redhat.com/solutions/4844461)).

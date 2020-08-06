@@ -13,11 +13,19 @@ This brings up the familiar OpenShift console with the lab text to the side. You
 
 ### Virtual Machines in OpenShift!
 
-Once OpenShift virtualisation is installed options for Virtual Machines will appear under the Workloads section. And once you have running VM's they are added for easy access from the "Cluster Inventory" Panel:
+Once OpenShift Virtualization is installed an Option called **Virtualization** will appear under the **Workloads** section:
 
-<img src="img/console-3.png"/>
+<img src="img/ocpvirt-dashboard.png"/>
 
-Choose "**Virtual Machines**" from the "**Workloads**" menu and you will see the running VMs from the labs. Click on the link for the "**rhel8-server-nfs**" instance. You can see some of the familiar features of this instance, such as the IP, node, OS, and more.
+In newer OpenShift Consoles this menu is slightly renamed. Where there previously were two options of **Virtual Machines** and **Virtual Machine Templates** they have been combined under a single option simply called **Virtualization**:
+
+<img src="img/virt-45-console.png"/>
+
+>**NOTE**: This new option contains all the OpenShift Virtualization finctionality of the previous two menu items in one place. Any previous representations of the console used within this lab are being upated, and should be used interchangeably.
+
+You can then choose "**Virtualization**" from the "**Workloads**" menu and you will see the running VMs from the labs. 
+
+Click on the link for the "**rhel8-server-nfs**" instance. You can see some of the familiar features of this instance, such as the IP, node, OS, and more.
 
 <img src="img/console-4.png"/>
 
@@ -113,7 +121,7 @@ When ready, click "**Review and Create >**" at the bottom. You'll then be able t
 
 <img src="img/console-15.png"/>
 
-The VM is now ready to be *started* (the default behaviour is to not start the machine after creation). From the "**Workloads > Virtual Machines**" menu choose the *3 dots* menu and select "**Start Virtual Machine**":
+The VM is now ready to be *started* (the default behaviour is to not start the machine after creation). From the "**Workloads > Virtualization**" menu choose the *3 dots* menu and select "**Start Virtual Machine**":
 
 <img src="img/console-16.png"/>
 

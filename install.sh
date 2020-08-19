@@ -9,9 +9,9 @@ SSH_PUB_BASTION=~/.ssh/id_rsa.pub
 PULL_SECRET=''
 
 # Set the locations of the images you want to use...
-RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-installer-initramfs.x86_64.img
-RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-installer-kernel-x86_64
-RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-metal.x86_64.raw.gz
+RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-installer-initramfs.x86_64.img
+RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-installer-kernel-x86_64
+RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-metal.x86_64.raw.gz
 OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-install-linux.tar.gz
 OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-client-linux.tar.gz
 

@@ -9,9 +9,9 @@ SSH_PUB_BASTION=~/.ssh/id_rsa.pub
 PULL_SECRET=''
 
 # Set the locations of the images you want to use...
-RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-installer-initramfs.x86_64.img
-RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-installer-kernel-x86_64
-RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-4.5.2-x86_64-metal.x86_64.raw.gz
+RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-installer-initramfs.x86_64.img
+RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-installer-kernel-x86_64
+RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-metal.x86_64.raw.gz
 OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-install-linux.tar.gz
 OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-client-linux.tar.gz
 
@@ -25,8 +25,31 @@ echo "=============================="
 echo "KubeVirt Lab Deployment Script"
 echo -e "==============================\n"
 
-echo -e "[INFO] Checking if CoreOS and OpenShift image locations are accessible...\n"
+echo -e "[INFO] Checking if your pull secret is VALID (won't check if authorised)...\n"
+if [ -z "$PULL_SECRET" ]
+then
+	echo -e "[ERROR] Your PULL_SECRET variable is empty, you need to configure this.\n"
+	exit 1
+fi
+
+if ! command -v jq &> /dev/null
+then
+	echo -n "[WARNING] We use jq to validate your PULL_SECRET, but it's not installed. We can proceed at your own risk or Ctrl-C and install jq first. (Sleeping 10s)"
+	sleep 10
+else
+
+	if jq -e . >/dev/null 2>&1 <<<"$PULL_SECRET"
+	then
+		echo -e "[INFO] Your pull secret appears to be formatted correctly."
+	else
+		echo -e "[ERROR] Your pull secret could not be parsed by jq, please re-check!\n"
+		exit 1
+	fi
+fi
+
+echo -e "\n\n[INFO] Checking if CoreOS and OpenShift image locations are accessible...\n"
 for i in $RHCOS_RAW $RHCOS_KERNEL $RHCOS_RAMDISK $OCP_INSTALL $OC_CLIENT $RHEL8_KVM
+
 do
 	echo -n "Checking: $i - "
 	if curl --output /dev/null --silent --head --fail $i

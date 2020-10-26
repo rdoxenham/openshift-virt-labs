@@ -21,6 +21,9 @@ RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-
 # Configure if you want to be able to support OpenShift Container Storage (3rd worker + extra volumes) - default is FALSE
 OCS_SUPPORT=false
 
+# Configure if you want to use a disconnected registry to save bandwidth and speed up deployment - default is TRUE
+USE_DISCONNECTED=true
+
 echo "=============================="
 echo "KubeVirt Lab Deployment Script"
 echo -e "==============================\n"
@@ -254,8 +257,18 @@ ssh -o StrictHostKeyChecking=no root@192.168.123.100 "restorecon -Rv /var/lib/tf
 cp -f configs/install-config.yaml pre-install-config.yaml
 sed -i "s/PULL_SECRET/$PULL_SECRET/g" pre-install-config.yaml
 scp -o StrictHostKeyChecking=no pre-install-config.yaml root@192.168.123.100:/root/install-config.yaml
+
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 'sed -i "s|BAST_SSHKEY|$(cat /root/.ssh/id_rsa.pub)|g" install-config.yaml'
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
+
+if $USE_DISCONNECTED; then
+    echo -e "\n\n[INFO] Deploying the disconnected image registry...\n"
+    scp -o StrictHostKeyChecking=no scripts/deploy-disconnected.sh root@192.168.123.100:/root/
+    echo $PULL_SECRET > /tmp/secret
+    scp -o StrictHostKeyChecking=no /tmp/secret root@192.168.123.100:~/pull-secret.json
+    rm /tmp/secret -f
+    ssh -o StrictHostKeyChecking=no root@192.168.123.100 sh /root/deploy-disconnected.sh
+fi
 
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create manifests"
 scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
@@ -274,6 +287,11 @@ while [ ! "`nmap -sV -p 22 192.168.123.100|grep open`" ]; do
   sleep 1s
 done
 echo
+
+if $USE_DISCONNECTED; then
+    sleep 30
+    ssh -o StrictHostKeyChecking=no root@192.168.123.100 podman start poc-registry
+fi
 
 mkdir -p generated/
 mv bastion-deploy.sh pre-install-config.yaml generated/

@@ -10,6 +10,7 @@ do
 	sudo rm -f /var/lib/libvirt/images/ocp4-$i-osd2.qcow2
 done
 
+sudo rm -rf pxeboot/generated
 sudo rm -f node-configs/*
 sudo rm -rf generated/
 

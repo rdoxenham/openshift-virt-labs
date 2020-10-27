@@ -16,7 +16,7 @@ oc adm release extract --registry-config "${PULL_SECRET}" --to /tmp/images ${REL
 # Configure a local registry pod to store the images
 yum -y install podman httpd httpd-tools
 mkdir -p /opt/registry/{auth,certs,data}
-openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 365 -out /opt/registry/certs/domain.crt -subj "/C=GB/ST=London/L=London/O=Red Hat/OU=Product/CN=$LOCAL_HOSTNAME"
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout /opt/registry/certs/domain.key -x509 -days 365 -out /opt/registry/certs/domain.crt -subj "/C=GB/ST=London/L=London/O=Red Hat/OU=Product/CN=$LOCAL_HOSTNAME" -addext "subjectAltName=DNS:ocp4-bastion.cnv.example.com"
 cp /opt/registry/certs/domain.crt $(pwd)/domain.crt
 cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
 update-ca-trust extract

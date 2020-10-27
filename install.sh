@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OpenShift virtualisation Labs Install Script
+# OpenShift Virtualisation Labs Install Script
 # Rhys Oxenham <roxenham@redhat.com>
 
 # Set location of SSH key you want to use for bastion
@@ -8,14 +8,11 @@ SSH_PUB_BASTION=~/.ssh/id_rsa.pub
 # Set your pull secret json (cloud.redhat.com; more directly at https://cloud.redhat.com/openshift/install)
 PULL_SECRET=''
 
-# Set the locations of the images you want to use...
-RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-installer-initramfs.x86_64.img
-RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-installer-kernel-x86_64
-RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.5/latest/rhcos-metal.x86_64.raw.gz
-OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-install-linux.tar.gz
-OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-client-linux.tar.gz
+# Set the version of OpenShift you want to deploy
+# Check available versions here: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
+OCP_VERSION=4.6.1
 
-# You will need either a RHEL8 or CentOS8 image
+# Set the RHEL8 or CentOS8 image you will use for the bastion VM
 RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2
 
 # Configure if you want to be able to support OpenShift Container Storage (3rd worker + extra volumes) - default is FALSE
@@ -24,9 +21,37 @@ OCS_SUPPORT=false
 # Configure if you want to use a disconnected registry to save bandwidth and speed up deployment - default is TRUE
 USE_DISCONNECTED=true
 
-echo "=============================="
-echo "KubeVirt Lab Deployment Script"
-echo -e "==============================\n"
+################################
+# DO NOT CHANGE ANYTHING BELOW #
+################################
+
+SUBVER=`echo "${OCP_VERSION:0:3}"`
+OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OCP_VERSION/openshift-install-linux.tar.gz
+OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OCP_VERSION/openshift-client-linux.tar.gz
+
+mkdir -p pxeboot/generated
+cp pxeboot/C* pxeboot/default pxeboot/generated
+
+if [ $SUBVER = "4.5" ]
+then
+    RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-installer-initramfs.x86_64.img
+    RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-installer-kernel-x86_64
+else
+    RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-live-initramfs.x86_64.img
+    RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-live-kernel-x86_64
+
+    # Remove the coreos.inst.image_url entry as it causes a boot conflict on >=4.6
+    sed -i "s|coreos.inst.image_url=http://192.168.123.100:81/rhcos.raw.gz||g" pxeboot/generated/*
+fi
+
+RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-metal.x86_64.raw.gz
+RHCOS_ROOTFS=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-live-rootfs.x86_64.img
+
+echo "=============================================="
+echo "OpenShift Virtualisation Lab Deployment Script"
+echo -e "==============================================\n"
+
+echo -e "[INFO] Requested deployment version: OpenShift $OCP_VERSION\n"
 
 echo -e "[INFO] Checking if your pull secret is VALID (won't check if authorised)...\n"
 if [ -z "$PULL_SECRET" ]
@@ -51,8 +76,23 @@ else
 fi
 
 echo -e "\n\n[INFO] Checking if CoreOS and OpenShift image locations are accessible...\n"
-for i in $RHCOS_RAW $RHCOS_KERNEL $RHCOS_RAMDISK $OCP_INSTALL $OC_CLIENT $RHEL8_KVM
 
+if [ $SUBVER = "4.5" ]
+then
+    echo -e "[INFO] Skipping RHCOS RootFS Download (not required prior to 4.6)\n"
+else
+    echo -n "Checking: $RHCOS_ROOTFS - "
+    if curl --output /dev/null --silent --head --fail $RHCOS_ROOTFS
+    then
+        echo "[OK]"
+    else
+        echo "[FAIL]"
+        echo -e "\n\n[ERROR] Failed to deploy due to inaccessible image locations"
+        exit 1
+    fi
+fi
+
+for i in $RHCOS_RAW $RHCOS_KERNEL $RHCOS_RAMDISK $OCP_INSTALL $OC_CLIENT $RHEL8_KVM
 do
 	echo -n "Checking: $i - "
 	if curl --output /dev/null --silent --head --fail $i
@@ -213,12 +253,14 @@ sed -i 's/Listen 80/Listen 81/g' /etc/httpd/conf/httpd.conf
 wget $RHCOS_RAW
 wget $RHCOS_KERNEL
 wget $RHCOS_RAMDISK
+wget $RHCOS_ROOTFS
 wget $OCP_INSTALL
 wget $OC_CLIENT
 mv rhcos* /var/www/html
 mv /var/www/html/*raw* /var/www/html/rhcos.raw.gz
 mv /var/www/html/*kernel* /var/www/html/rhcos.kernel
 mv /var/www/html/*initramfs* /var/www/html/rhcos.initramfs
+mv /var/www/html/*rootfs* /var/www/html/rhcos.rootfs
 chmod -R 777 /var/www/html
 restorecon -Rv /var/www/html
 tar -zxvf openshift-client*
@@ -251,7 +293,7 @@ scp -o StrictHostKeyChecking=no configs/named.conf root@192.168.123.100:/etc/nam
 scp -o StrictHostKeyChecking=no configs/haproxy.cfg root@192.168.123.100:/etc/haproxy/haproxy.cfg
 scp -o StrictHostKeyChecking=no configs/123.168.192.db root@192.168.123.100:/var/named/123.168.192.db
 scp -o StrictHostKeyChecking=no configs/cnv.example.com.db root@192.168.123.100:/var/named/cnv.example.com.db
-scp -o StrictHostKeyChecking=no -r pxeboot/* root@192.168.123.100:/var/lib/tftpboot/pxelinux/pxelinux.cfg/
+scp -o StrictHostKeyChecking=no -r pxeboot/generated/* root@192.168.123.100:/var/lib/tftpboot/pxelinux/pxelinux.cfg/
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "restorecon -Rv /var/lib/tftpboot/ && chmod -R 777 /var/lib/tftpboot/pxelinux"
 
 cp -f configs/install-config.yaml pre-install-config.yaml

@@ -2,17 +2,19 @@
 # OpenShift Virtualisation Labs Install Script
 # Rhys Oxenham <roxenham@redhat.com>
 
-# Set location of SSH key you want to use for bastion
+# Set location of SSH public key you want to use for the bastion VM
 SSH_PUB_BASTION=~/.ssh/id_rsa.pub
 
-# Set your pull secret json (cloud.redhat.com; more directly at https://cloud.redhat.com/openshift/install)
+# Set your pull secret json (see https://cloud.redhat.com/openshift/install)
 PULL_SECRET=''
 
 # Set the version of OpenShift you want to deploy
+# You can use a specific release, e.g. 4.6.1, or use latest-4.5, latest-4.6 (default), etc.
 # Check available versions here: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
-OCP_VERSION=4.6.1
+OCP_VERSION=latest-4.6
 
 # Set the RHEL8 or CentOS8 image you will use for the bastion VM
+# This image will be cached in /var/lib/libvirt/images if you've already got one
 RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2
 
 # Configure if you want to be able to support OpenShift Container Storage (3rd worker + extra volumes) - default is FALSE
@@ -25,7 +27,13 @@ USE_DISCONNECTED=true
 # DO NOT CHANGE ANYTHING BELOW #
 ################################
 
-SUBVER=`echo "${OCP_VERSION:0:3}"`
+if [[ "$OCP_VERSION" == *"latest"* ]]
+then
+    SUBVER=`echo "${OCP_VERSION}" | cut -d- -f2`
+else
+    SUBVER=`echo "${OCP_VERSION:0:3}"`
+fi
+
 OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OCP_VERSION/openshift-install-linux.tar.gz
 OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OCP_VERSION/openshift-client-linux.tar.gz
 

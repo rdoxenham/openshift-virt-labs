@@ -23,6 +23,10 @@ OCS_SUPPORT=false
 # Configure if you want to use a disconnected registry to save bandwidth and speed up deployment - default is TRUE
 USE_DISCONNECTED=true
 
+# Configure if you want to use Baremetal IPI mode instead of UPI (requires 4.6) - default is FALSE
+# This is just a placeholder for now, the code for this will drop shortly.
+USE_IPI=true
+
 ################################
 # DO NOT CHANGE ANYTHING BELOW #
 ################################
@@ -81,6 +85,13 @@ else
 		echo -e "[ERROR] Your pull secret could not be parsed by jq, please re-check!\n"
 		exit 1
 	fi
+fi
+
+MINORVER=`echo "${SUBVER}" | cut -d. -f2`
+if [ $MINORVER -le 5 ] && $USE_IPI
+then
+    echo -e "\n[ERROR] To use the Baremetal IPI mode you need to use (at least) OpenShift 4.6.0.\n"
+    exit 1
 fi
 
 echo -e "\n\n[INFO] Checking if CoreOS and OpenShift image locations are accessible...\n"

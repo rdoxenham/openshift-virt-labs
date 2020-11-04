@@ -2,7 +2,7 @@
 
 **Authors**: [Rhys Oxenham](mailto:roxenham@redhat.com) and [August Simonelli](mailto:asimonel@redhat.com)
 
-Welcome to our hands-on OpenShift Virtualization lab. Right now this repo provides an installation script that builds out an OpenShift 4.5 UPI installation (although the versions can be easily customised) on a single baremetal machine where all of the masters and workers are virtualised. The script also deploys a self-hosted OpenShift Virtualization hands-on self-paced lab guide based on [OpenShift homeroom](https://github.com/openshift-homeroom) - this guide will walk you through deployment of OpenShift Virtualization through to some common usage patterns.
+Welcome to our hands-on OpenShift Virtualization lab. Right now this repo provides an installation script that builds out an OpenShift 4.6 UPI installation (although the versions can be easily customised) on a single baremetal machine where all of the masters and workers are virtualised. The script also deploys a self-hosted OpenShift Virtualization hands-on self-paced lab guide based on [OpenShift homeroom](https://github.com/openshift-homeroom) - this guide will walk you through deployment of OpenShift Virtualization through to some common usage patterns. It's also possible to test out [OpenShift Container Storage](https://www.redhat.com/en/technologies/cloud-computing/openshift-container-storage) (OCS) as part of this lab should you have the required hardware for it.
 
 We are going to use the official Red Hat downstream components, where **OpenShift Virtualization** is now the official feature name of the packaged up [Kubevirt project](https://kubevirt.io/) within the OpenShift product. For the purposes of this repo and the labs themselves, any reference to "CNV", "Container-native virtualisation" and "OpenShift Virtualization", and "KubeVirt" can be used interchangeably.
 
@@ -47,20 +47,23 @@ The bastion host is critical to the deployment for a number of reasons; it provi
 
 To run this course your baremetal machine needs to meet the following requirements-
 
-* A single **baremetal** host (right now we don't support multi-host) that's installed with either RHEL 8, CentOS 8, or a recent Fedora release - we've tested with fc31.
-* Must have at least **128GB memory** - we've seen it work with 64GB+(large)swap but YMMV
-* Must have ~**200GB of SSD**/NVME storage space - it can work with spinning rust but YMMV
+* A single **baremetal** host (right now we don't support multi-host) that's installed with either RHEL 8, CentOS 8, or a recent Fedora release - we've tested with fc31+.
+* Must have at least **128GB memory** - we've seen it work with 64GB+(large) NVMe-based swap but YMMV
+* Must have ~**200GB of SSD**/NVMe storage space - it can work with spinning rust but YMMV
+* If using OpenShift Container Storage (OCS), you're going to want an **additional 200GB** at least.
 
 
 ### User Requirements
 
-In addition to the hardware requirements, there's a number of things that you'll need to populate in the `install.sh` script before you execute it-
+In addition to the hardware requirements, there's a number of environmental requirements and configurables that you'll need to populate in the `install.sh` script before you execute it-
 
 * You need to either have **root** access to the baremetal server, or a user with full **sudo** privileges (without a password)
-* The list of image locations that you want to pull - the script could even be used to pull bleeding edge nightlies, which can break, your mileage may vary with these and you may want to play it safe. The parameters to update are `RHCOS_RAMDISK`, `RHCOS_KERNEL`, `RHCOS_RAW`, `OCP_INSTALL` and `OC_CLIENT`. All of these files can be pulled from *mirror.openshift.com*. The filenames are somewhat explanatory, but if you have questions please ask us.
-* The location of a vanilla RHEL8 (or CentOS) KVM image (`RHEL8_KVM`) - This will be downloaded (like the other images) when you run the installer. Note that currently if this file already exists in */var/lib/libvirt/images* then it won't download/overwrite it.
+* You need to specify the OpenShift version that you want to deploy, by default we use the latest 4.6 release available on the OpenShift [mirrors](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/). Set this with the `OCP_VERSION` flag at the top of the script.
+* The location of a vanilla RHEL8 (or CentOS) KVM image (`RHEL8_KVM`) - This will be downloaded (like the other images) when you run the installer. Note that currently if this file already exists in */var/lib/libvirt/images* then it won't download/overwrite it. By default we pull a CentOS 8 cloud image for you.
 * The public ssh-key (`SSH_PUB_BASTION`) that you want to inject into the bastion node so we can execute commands against it without worrying about passwords.
 * Your OpenShift *pull secret* so we can pull OpenShift images (`PULL_SECRET`). This is a **json** formatted string with all of the necessary authentication and authorisation secrets and is linked to your specific username/email-address. This can be downloaded from [cloud.redhat.com](https://cloud.redhat.com/) (with instructions [here](https://access.redhat.com/solutions/4844461)).
+* Specify whether you want to deploy with support for OpenShift Container Storage with the `OCS_SUPPORT` variable, noting that this is false by default. This will deploy a third worker and additional storage volumes for each of the nodes.
+* Specify whether you want to use a disconnected image registry as part of the installation to mimic a disconnected installation with the variable `USE_DISCONNECTED` - this can speed up the deployment time and also limit the amount of bandwidth consumed as the image pull for the OpenShift bits themselves only happens once. The default value for this is true.
 
 
 
@@ -104,7 +107,7 @@ During the course of the installation we give some information about what it's d
 logout
 ~~~
 
-> **NOTE**: It's just fine for the *ocp4-bootstrap* VM to be shut-off, this is just a temporary VM used during the installation of OpenShift 4. It can be deleted if you want, but we remove this during the cleanup stage later.
+> **NOTE**: It's just fine for the *ocp4-bootstrap* VM to be shut-off, this is just a temporary VM used during the installation of OpenShift 4. It can be deleted if you want, but we remove this during the cleanup stage later. If you've deployed with `OCS_SUPPORT=true` you will see a third worker node here.
 
 
 

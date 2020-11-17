@@ -24,7 +24,7 @@ OCS_SUPPORT=false
 USE_DISCONNECTED=true
 
 # Configure if you want to use Baremetal IPI mode instead of UPI (requires 4.6) - default is FALSE
-# This is just a placeholder for now, the code for this will drop shortly.
+# WARNING: This code is experimental and has not been extensively tested on EL8.
 USE_IPI=false
 
 ################################
@@ -425,7 +425,7 @@ ssh -o StrictHostKeyChecking=no root@192.168.123.100 'echo -e "search cnv.exampl
 if $USE_IPI; then
 	scp -o StrictHostKeyChecking=no scripts/rhcos-refresh.sh root@192.168.123.100:~
 	echo -e "\n\n[INFO] Extracting the OpenShift Baremetal Installer binary...\n"
-	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "oc adm release extract --registry-config ~/pull-secret.json --command=openshift-baremetal-install --to ~ 4.6.4"
+	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "oc adm release extract --registry-config ~/pull-secret.json --command=openshift-baremetal-install --to /root \$(oc version | awk '/Client/ {print \$3;}')"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install version"
 	echo -e "\n\n[INFO] Grabbing the latest RHCOS images for the specified OpenShift version...\n"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml

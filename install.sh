@@ -355,7 +355,7 @@ echo -e "\n\n[INFO] Running the bastion deployment script remotely...\n"
 
 scp -o StrictHostKeyChecking=no bastion-deploy.sh root@192.168.123.100:/root/
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 sh /root/bastion-deploy.sh
-#ssh -o StrictHostKeyChecking=no root@192.168.123.100 rm -f /root/bastion-deploy.sh
+ssh -o StrictHostKeyChecking=no root@192.168.123.100 rm -f /root/bastion-deploy.sh
 
 echo -e "\n\n[INFO] Copying the RHEL8 KVM Image into the guest...\n"
 scp -o StrictHostKeyChecking=no /var/lib/libvirt/images/rhel8-kvm.qcow2 root@192.168.123.100:/var/www/html/

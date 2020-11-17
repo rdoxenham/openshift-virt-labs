@@ -21,7 +21,7 @@ then
 
 	for i in {1..6}
 	do
-		sudo firewall-cmd --remove-port 623$j/udp --zone libvirt --permanent
+		sudo firewall-cmd --remove-port 623$i/udp --zone libvirt --permanent
 	done
 
 	sudo firewall-cmd --reload

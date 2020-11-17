@@ -1,0 +1,38 @@
+@   IN  SOA     ocp4-bastion.cnv.example.com. root.cnv.example.com. (
+                                                1001    ;Serial
+                                                3H      ;Refresh
+                                                15M     ;Retry
+                                                1W      ;Expire
+                                                1D      ;Minimum TTL
+                                                )
+
+;Name Server Information
+@      IN  NS      ocp4-bastion.cnv.example.com.
+
+;IP address of Name Server
+ocp4-bastion IN  A       192.168.123.100
+
+;A - Record HostName To IP Address
+ocp4-bootstrap	 IN  A       192.168.123.99
+ocp4-master1     IN  A       192.168.123.101
+ocp4-master2     IN  A       192.168.123.102
+ocp4-master3     IN  A       192.168.123.103
+ocp4-worker1	 IN  A       192.168.123.104
+ocp4-worker2	 IN  A       192.168.123.105
+ocp4-worker3	 IN  A       192.168.123.106
+openshift	 IN  A       192.168.123.100
+
+api		 IN  A       192.168.123.10
+api-int		 IN  A       192.168.123.10
+
+;Wildcard Entry for apps
+
+*.apps.cnv.example.com. 300 IN  A 192.168.123.11
+
+etcd-0	IN  A 192.168.123.101
+etcd-1	IN  A 192.168.123.102
+etcd-2	IN  A 192.168.123.103
+
+_etcd-server-ssl._tcp.cnv.example.com  86400 IN    SRV 0        10     2380 etcd-0.cnv.example.com.
+_etcd-server-ssl._tcp.cnv.example.com  86400 IN    SRV 0        10     2380 etcd-1.cnv.example.com.
+_etcd-server-ssl._tcp.cnv.example.com  86400 IN    SRV 0        10     2380 etcd-2.cnv.example.com.

@@ -1,0 +1,88 @@
+apiVersion: v1
+baseDomain: example.com
+compute:
+- hyperthreading: Enabled
+  name: worker
+  replicas: 2
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  replicas: 3
+  platform:
+    baremetal: {}
+metadata:
+  name: cnv
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+  machineCIDR: 192.168.123.0/24
+platform:
+  baremetal:
+    provisioningNetworkCIDR: 172.22.0.0/24
+    provisioningNetworkInterface: enp1s0
+    apiVIP: 192.168.123.10
+    ingressVIP: 192.168.123.11
+    dnsVIP: 192.168.123.12
+    bootstrapOSImage: http://192.168.123.100:81/RHCOS_QEMU_IMAGE
+    clusterOSImage: http://192.168.123.100:81/RHCOS_OPENSTACK_IMAGE
+    hosts:
+      - name: master1
+        role: master
+        bmc:
+          address: ipmi://192.168.123.1:6231
+          username: admin
+          password: redhat
+        bootMACAddress: de:ad:be:ef:00:01
+        rootDeviceHints:
+          deviceName: /dev/vda
+      - name: master2
+        role: master
+        bmc:
+          address: ipmi://192.168.123.1:6232
+          username: admin
+          password: redhat
+        bootMACAddress: de:ad:be:ef:00:02
+        rootDeviceHints:
+          deviceName: /dev/vda
+      - name: master3
+        role: master
+        bmc:
+          address: ipmi://192.168.123.1:6233
+          username: admin
+          password: redhat
+        bootMACAddress: de:ad:be:ef:00:03
+        rootDeviceHints:
+          deviceName: /dev/vda
+      - name: worker1
+        role: worker
+        bmc:
+          address: ipmi://192.168.123.1:6234
+          username: admin
+          password: redhat
+        bootMACAddress: de:ad:be:ef:00:04
+        rootDeviceHints:
+          deviceName: /dev/vda
+      - name: worker2
+        role: worker
+        bmc:
+          address: ipmi://192.168.123.1:6235
+          username: admin
+          password: redhat
+        bootMACAddress: de:ad:be:ef:00:05
+        rootDeviceHints:
+          deviceName: /dev/vda
+      - name: worker3
+        role: worker
+        bmc:
+          address: ipmi://192.168.123.1:6236
+          username: admin
+          password: redhat
+        bootMACAddress: de:ad:be:ef:00:06
+        rootDeviceHints:
+          deviceName: /dev/vda
+pullSecret: 'PULL_SECRET'
+sshKey: 'BAST_SSHKEY'

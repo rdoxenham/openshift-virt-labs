@@ -50,20 +50,20 @@ To run this course your baremetal machine needs to meet the following requiremen
 * A single **baremetal** host (right now we don't support multi-host) that's installed with either RHEL 8, CentOS 8, or a recent Fedora release - we've tested with fc31+.
 * Must have at least **128GB memory** - we've seen it work with 64GB+(large) NVMe-based swap but YMMV
 * Must have ~**200GB of SSD**/NVMe storage space - it can work with spinning rust but YMMV
-* If using OpenShift Container Storage (OCS), you're going to want an **additional 200GB** at least.
+* If using OpenShift Container Storage (OCS), you're going to want an **additional 200GB** at least, but the more the merrier.
 
 
 ### User Requirements
 
-In addition to the hardware requirements, there's a number of environmental requirements and configurables that you'll need to populate in the `install.sh` script before you execute it-
+In addition to the hardware requirements, there's a number of environmental requirements, for example you need to either have **root** access to the baremetal server, or a user with full **sudo** privileges (without a password). There's also a set of **configurables** that you'll need to populate in the `install.sh` script before you execute it-
 
-* You need to either have **root** access to the baremetal server, or a user with full **sudo** privileges (without a password)
-* You need to specify the OpenShift version that you want to deploy, by default we use the latest 4.6 release available on the OpenShift [mirrors](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/). Set this with the `OCP_VERSION` flag at the top of the script.
-* The location of a vanilla RHEL8 (or CentOS) KVM image (`RHEL8_KVM`) - This will be downloaded (like the other images) when you run the installer. Note that currently if this file already exists in */var/lib/libvirt/images* then it won't download/overwrite it. By default we pull a CentOS 8 cloud image for you.
-* The public ssh-key (`SSH_PUB_BASTION`) that you want to inject into the bastion node so we can execute commands against it without worrying about passwords.
-* Your OpenShift *pull secret* so we can pull OpenShift images (`PULL_SECRET`). This is a **json** formatted string with all of the necessary authentication and authorisation secrets and is linked to your specific username/email-address. This can be downloaded from [cloud.redhat.com](https://cloud.redhat.com/) (with instructions [here](https://access.redhat.com/solutions/4844461)).
-* Specify whether you want to deploy with support for OpenShift Container Storage with the `OCS_SUPPORT` variable, noting that this is false by default. This will deploy a third worker and additional storage volumes for each of the nodes.
-* Specify whether you want to use a disconnected image registry as part of the installation to mimic a disconnected installation with the variable `USE_DISCONNECTED` - this can speed up the deployment time and also limit the amount of bandwidth consumed as the image pull for the OpenShift bits themselves only happens once. The default value for this is true.
+* `OCP_VERSION`: You need to specify the OpenShift version that you want to deploy, by default we use the **latest 4.6** release available on the OpenShift [mirrors](https://mirror.openshift.com/pub/openshift-v4/clients/ocp/).
+* `RHEL8_KVM`: The location of a vanilla RHEL8 (or CentOS) KVM image - this will be downloaded (like the other images) when you run the installer. Note that currently if this file already exists in */var/lib/libvirt/images* then it won't download/overwrite it. By default we pull a CentOS 8 cloud image for you.
+* `SSH_PUB_BASTION`: The public ssh-key that you want to inject into the bastion node so we can execute commands against it without worrying about passwords.
+* `PULL_SECRET`: Your OpenShift *pull secret* so we can pull OpenShift images. This is a **json** formatted string with all of the necessary authentication and authorisation secrets and is linked to your specific username/email-address. This can be downloaded from [cloud.redhat.com](https://cloud.redhat.com/) (with instructions [here](https://access.redhat.com/solutions/4844461)).
+* `OCS_SUPPORT`: Specify whether you want to deploy with support for OpenShift Container Storage, noting that this is **false** by default. This will deploy a third worker and additional storage volumes for each of the nodes.
+* `USE_DISCONNECTED`: Specify whether you want to use a disconnected image registry as part of the installation to mimic a disconnected installation  - this can speed up the deployment time and also limit the amount of bandwidth consumed as the image pull for the OpenShift bits themselves only happens once. The default value for this is **true**.
+* `USE_IPI`: Specify whether you want to use the Installer Provisioned Infrastructure (IPI) model, i.e. "baremetal IPI" via the [Metal3](http://metal3.io/) project, where your nodes will be instructed to boot via virtual BMC; this will allow you to mimic a real baremetal environment instead of the default User Provisioned Infrastructure (UPI) model. Note this only just went GA with OpenShift 4.6, so if you enable this you must select *4.6.0+* in the `OCP_VERSION` field. The default for this is currently **false** as it's considered an <u>experimental feature</u>.
 
 
 

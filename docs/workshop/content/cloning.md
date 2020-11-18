@@ -194,7 +194,7 @@ metadata:
     app: fc31-nfs
     flavor.template.kubevirt.io/small: 'true'
     os.template.kubevirt.io/fedora31: 'true'
-    vm.kubevirt.io/template: fedora-server-small-v0.7.0
+    vm.kubevirt.io/template: fedora-server-small-v0.11.3
     vm.kubevirt.io/template-namespace: openshift
     workload.template.kubevirt.io/server: 'true'
 spec:
@@ -482,7 +482,7 @@ metadata:
     app: fc31-clone
     flavor.template.kubevirt.io/small: 'true'
     os.template.kubevirt.io/fedora31: 'true'
-    vm.kubevirt.io/template: fedora-server-small-v0.7.0
+    vm.kubevirt.io/template: fedora-server-small-v0.11.3
     vm.kubevirt.io/template-namespace: openshift
     workload.template.kubevirt.io/server: 'true'
 spec:

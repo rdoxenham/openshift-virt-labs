@@ -136,9 +136,28 @@ echo -e "\n\n[INFO] Installing necessary packages on the hypervisor...\n"
 sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 sudo dnf -y install wget libvirt qemu-kvm virt-manager virt-install libguestfs libguestfs-tools libguestfs-xfs net-tools sshpass virt-what nmap
 
-if $USE_IPI; then
+EL8=false
+if hostnamectl | egrep -i '(red|cent)'> /dev/null 2>&1
+then
+	EL8=true
+fi
+
+if $EL8 && $USE_IPI
+then
+	echo -e "\n\n[INFO] Enabling OpenStack package repos for VirtualBMC...\n"
+	dnf install https://www.rdoproject.org/repos/rdo-release.el8.rpm -y
+	dnf install python36 -y
+fi
+
+if $USE_IPI
+then
 	sudo dnf install python3-virtualbmc -y
-	sudo systemctl enable --now vbmcd
+	if $EL8
+	then
+		sudo systemctl enable --now virtualbmc
+	else
+		sudo systemctl enable --now vbmcd
+	fi
 fi
 
 echo -e "\n\n[INFO] Defining the dedicated libvirt network (192.168.123.0/24)...\n"
@@ -149,7 +168,8 @@ sudo virsh net-define configs/ocp4-net.xml
 sudo virsh net-start ocp4-net
 sudo virsh net-autostart ocp4-net
 
-if $USE_IPI; then
+if $USE_IPI
+then
 	sudo virsh net-define configs/ipi/ocp4-prov-net.xml
 	sudo virsh net-start ocp4-provisioning
 	sudo virsh net-autostart ocp4-provisioning
@@ -226,15 +246,24 @@ done
 if $USE_IPI; then
 	echo -e "\n[INFO] Setting up for an IPI based installation...\n"
 	counter=1
+	FIREWALLD=false
+	if sudo systemctl status firewalld 2>&1 >/dev/null
+	then
+		FIREWALLD=true
+	fi
 	for i in master1 master2 master3 worker1 worker2 worker3
 	do
 		sudo vbmc add --username admin --password redhat --port 623$counter --address 192.168.123.1 --libvirt-uri qemu:///system ocp4-$i
 		sudo vbmc start ocp4-$i
-		sudo firewall-cmd --add-port 623$counter/udp --zone libvirt --permanent
+		if $FIREWALLD
+		then
+			sudo firewall-cmd --add-port 623$counter/udp --zone libvirt --permanent
+		else
+			sudo iptables -A LIBVIRT_INP -p udp --dport 623$counter -j ACCEPT
+		fi
 		counter=$((counter + 1))
 	done
-	sudo firewall-cmd --reload
-	sudo systemctl enable --now vbmcd
+	if $FIREWALLD; then sudo firewall-cmd --reload; fi
 	sudo vbmc list
 fi
 
@@ -330,6 +359,7 @@ if $USE_IPI; then
 	nmcli connection modify baremetal ipv4.gateway 192.168.123.1
 	nmcli con down baremetal
 	nmcli con up baremetal
+	rm -f /etc/sysconfig/network-scripts/ifcfg-eth0
 EOF
 
 else
@@ -434,6 +464,8 @@ if $USE_IPI; then
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
 	echo -e "\n\n[INFO] Running OpenShift IPI Installation (nodes will boot automatically)...\n"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install --log-level=debug create cluster"
+	# Sometimes this can timeout on a slower system so adding in an extra 1hr to the timeout
+	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install --log-level=debug wait-for install-complete"
 else
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create manifests"
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/

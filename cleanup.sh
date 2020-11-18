@@ -10,7 +10,7 @@ do
 	sudo rm -f /var/lib/libvirt/images/ocp4-$i-osd2.qcow2
 done
 
-if sudo systemctl status vbmcd 2>&1 >/dev/null
+if sudo systemctl status vbmcd 2>&1 >/dev/null || sudo systemctl status virtualbmc 2>&1 >/dev/null
 then
 	for i in master1 master2 master3 worker1 worker2 worker3
 	do
@@ -19,14 +19,22 @@ then
 
 	sudo rm -rf /var/lib/vbmcd/.vbmc
 
-	for i in {1..6}
-	do
-		sudo firewall-cmd --remove-port 623$i/udp --zone libvirt --permanent
-	done
-
-	sudo firewall-cmd --reload
+	if sudo systemctl status firewalld 2>&1 >/dev/null
+	then
+		for i in {1..6}
+		do
+			sudo firewall-cmd --remove-port 623$i/udp --zone libvirt --permanent
+		done
+		sudo firewall-cmd --reload
+	else
+		for i in {1..6}
+		do
+			sudo iptables -D LIBVIRT_INP -p udp --dport 623$counter -j ACCEPT
+		done
+	fi
 
 	sudo systemctl disable --now vbmcd
+	sudo systemctl disable --now virtualbmc
 fi
 
 sudo rm -rf pxeboot/generated

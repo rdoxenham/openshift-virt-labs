@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 systemctl start named
+echo -e "search cnv.example.com\nnameserver 192.168.123.1" > /etc/resolv.conf
 
 export VERSION=$(oc version | awk '{print $3;}')
 export RELEASE_IMAGE=$(curl -s https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$VERSION/release.txt | grep 'Pull From: quay.io' | awk -F ' ' '{print $3}' | xargs)

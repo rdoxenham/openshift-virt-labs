@@ -213,7 +213,7 @@ cnv-2-build   1/1     Running   0          31s
 
 (after a few minutes)
 
-# # oc get pods
+# oc get pods
 NAME           READY   STATUS      RESTARTS   AGE
 cnv-2-build    0/1     Completed   0          4m18s
 cnv-2-deploy   0/1     Completed   0          2m53s

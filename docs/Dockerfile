@@ -2,8 +2,8 @@ FROM quay.io/openshifthomeroom/workshop-dashboard:5.0.0
 
 USER root
 
-ADD https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.5/openshift-client-linux.tar.gz /opt/app-root/bin/
-ADD https://github.com/kubevirt/kubevirt/releases/download/v0.31.0/virtctl-v0.31.0-linux-amd64 /opt/app-root/bin/virtctl
+ADD https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.6/openshift-client-linux.tar.gz /opt/app-root/bin/
+ADD https://github.com/kubevirt/kubevirt/releases/download/v0.34.2/virtctl-v0.34.2-linux-amd64 /opt/app-root/bin/virtctl
 
 COPY . /tmp/src
 

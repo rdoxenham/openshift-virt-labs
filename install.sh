@@ -15,7 +15,7 @@ OCP_VERSION=latest-4.6
 
 # Set the RHEL8 or CentOS8 image you will use for the bastion VM
 # This image will be cached in /var/lib/libvirt/images if you've already got one
-RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2
+RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.3.2011-20201204.2.x86_64.qcow2
 
 # Configure if you want to be able to support OpenShift Container Storage (3rd worker + extra volumes) - default is FALSE
 OCS_SUPPORT=false
@@ -101,7 +101,7 @@ then
     echo -e "[INFO] Skipping RHCOS RootFS Download (not required prior to 4.6)\n"
 else
     echo -n "Checking: $RHCOS_ROOTFS - "
-    if curl --output /dev/null --silent --head --fail $RHCOS_ROOTFS
+    if curl -k --output /dev/null --silent --head --fail $RHCOS_ROOTFS
     then
         echo "[OK]"
     else
@@ -114,9 +114,10 @@ fi
 for i in $RHCOS_RAW $RHCOS_KERNEL $RHCOS_RAMDISK $OCP_INSTALL $OC_CLIENT $RHEL8_KVM
 do
 	echo -n "Checking: $i - "
-	if curl --output /dev/null --silent --head --fail $i
+	if curl -k --output /dev/null --silent --head --fail $i
 	then
 		echo "[OK]"
+
 	else
 		echo "[FAIL]"
 		echo -e "\n\n[ERROR] Failed to deploy due to inaccessible image locations"

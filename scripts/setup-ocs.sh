@@ -5,6 +5,7 @@ sleep 10
 
 export KUBECONFIG=~/ocp-install/auth/kubeconfig
 
+# Change this to masters if you are using compact cluster
 echo -e "\n[INFO] Labelling the workers as OCS capable nodes..."
 for i in 1 2 3; do
 	oc label nodes ocp4-worker$i.cnv.example.com cluster.ocs.openshift.io/openshift-storage=''
@@ -16,7 +17,7 @@ apiVersion: local.storage.openshift.io/v1
 kind: LocalVolume
 metadata:
   name: local-block
-  namespace: local-storage
+  namespace: openshift-local-storage
   labels:
     app: ocs-storagecluster
 spec:
@@ -41,7 +42,7 @@ echo ""
 oc get sc
 sleep 15
 echo ""
-oc get pods -n local-storage
+oc get pods -n openshift-local-storage
 sleep 40
 
 echo -e "\n[INFO] Printing PV's (make sure you see 6 local-storage volumes...)"
@@ -56,6 +57,35 @@ metadata:
   name: ocs-storagecluster
   namespace: openshift-storage
 spec:
+  resources:
+    mon:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 1
+        memory: 1Gi
+    mgr:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 1
+        memory: 1Gi
+    noobaa-core:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 1
+        memory: 1Gi
+    noobaa-db:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 1
+        memory: 1Gi
   manageNodes: false
   monDataDirHostPath: /var/lib/rook
   storageDeviceSets:
@@ -73,7 +103,13 @@ spec:
     placement: {}
     portable: false
     replica: 3
-    resources: {}
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 1
+        memory: 1Gi
 EOF
 
 echo -e "\n[INFO] Getting latest storage classes to validate Ceph availability...\n"

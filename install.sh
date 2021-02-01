@@ -13,6 +13,10 @@ PULL_SECRET=''
 # Check available versions here: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
 OCP_VERSION=latest-4.6
 
+# Configure if you want to try the pre-release code, where possible. Only set this if using a latest branch above
+# Default here is false and it may break RHCOS compatibility.
+USE_PRERELEASE=false
+
 # Set the RHEL8 or CentOS8 image you will use for the bastion VM
 # This image will be cached in /var/lib/libvirt/images if you've already got one
 RHEL8_KVM=https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.3.2011-20201204.2.x86_64.qcow2
@@ -27,6 +31,10 @@ USE_DISCONNECTED=true
 # WARNING: This code is experimental and has not been extensively tested on EL8.
 USE_IPI=false
 
+# Configure if you want to deploy a workerless configuration, known as a compact cluster (requires 4.6) - default is FALSE
+# WARNING: This code is experimental and has not been extensively tested on EL8.
+USE_COMPACT=false
+
 ################################
 # DO NOT CHANGE ANYTHING BELOW #
 ################################
@@ -38,8 +46,13 @@ else
     SUBVER=`echo "${OCP_VERSION:0:3}"`
 fi
 
-OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OCP_VERSION/openshift-install-linux.tar.gz
-OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OCP_VERSION/openshift-client-linux.tar.gz
+CLIENT_DIR="ocp"
+if $USE_PRERELEASE; then
+	CLIENT_DIR="ocp-dev-preview"
+fi
+
+OCP_INSTALL=https://mirror.openshift.com/pub/openshift-v4/clients/$CLIENT_DIR/$OCP_VERSION/openshift-install-linux.tar.gz
+OC_CLIENT=https://mirror.openshift.com/pub/openshift-v4/clients/$CLIENT_DIR/$OCP_VERSION/openshift-client-linux.tar.gz
 
 mkdir -p pxeboot/generated
 cp pxeboot/C* pxeboot/default pxeboot/generated
@@ -214,9 +227,17 @@ CPU_FLAGS="--cpu=host-passthrough"
 
 WORKER_MEMORY=32768
 BASTION_MEMORY=16384
+MASTER_MEMORY=16384
+MASTER_CPU=4
 if $LOW_MEMORY; then
 	WORKER_MEMORY=16384
 	BASTION_MEMORY=8192
+elif $USE_COMPACT; then
+	MASTER_MEMORY=32768
+fi
+
+if $USE_COMPACT; then
+	MASTER_CPU=16
 fi
 
 if $USE_IPI; then
@@ -232,9 +253,9 @@ fi
 mkdir -p node-configs/
 sudo virt-install --virt-type kvm --ram $BASTION_MEMORY --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-bastion.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:22:33:44 $BAST_PROV --boot hd --name ocp4-bastion --print-xml 1 > node-configs/ocp4-bastion.xml
 sudo virt-install --virt-type kvm --ram 8192 --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-bootstrap.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc --network network:ocp4-net,mac=52:54:00:33:44:55 --boot hd,network --name ocp4-bootstrap --print-xml 1 > node-configs/ocp4-bootstrap.xml
-sudo virt-install --virt-type kvm --ram 16384 --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master1.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $M1_PROV --network network:ocp4-net,mac=52:54:00:19:d7:9c --boot hd,network --name ocp4-master1 --print-xml 1 > node-configs/ocp4-master1.xml
-sudo virt-install --virt-type kvm --ram 16384 --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $M2_PROV --network network:ocp4-net,mac=52:54:00:60:66:89 --boot hd,network --name ocp4-master2 --print-xml 1 > node-configs/ocp4-master2.xml
-sudo virt-install --virt-type kvm --ram 16384 --vcpus 4 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master3.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $M3_PROV --network network:ocp4-net,mac=52:54:00:9e:5c:3f --boot hd,network --name ocp4-master3 --print-xml 1 > node-configs/ocp4-master3.xml
+sudo virt-install --virt-type kvm --ram $MASTER_MEMORY --vcpus $MASTER_CPU --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master1.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $M1_PROV --network network:ocp4-net,mac=52:54:00:19:d7:9c --boot hd,network --name ocp4-master1 --print-xml 1 > node-configs/ocp4-master1.xml
+sudo virt-install --virt-type kvm --ram $MASTER_MEMORY --vcpus $MASTER_CPU --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $M2_PROV --network network:ocp4-net,mac=52:54:00:60:66:89 --boot hd,network --name ocp4-master2 --print-xml 1 > node-configs/ocp4-master2.xml
+sudo virt-install --virt-type kvm --ram $MASTER_MEMORY --vcpus $MASTER_CPU --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-master3.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $M3_PROV --network network:ocp4-net,mac=52:54:00:9e:5c:3f --boot hd,network --name ocp4-master3 --print-xml 1 > node-configs/ocp4-master3.xml
 sudo virt-install --virt-type kvm --ram $WORKER_MEMORY --vcpus 16 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker1.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker1-osd1.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker1-osd2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $W1_PROV --network network:ocp4-net,mac=52:54:00:47:4d:83 --network network:ocp4-net,mac=52:54:00:47:5e:94 --boot hd,network --name ocp4-worker1 --print-xml 1 > node-configs/ocp4-worker1.xml
 sudo virt-install --virt-type kvm --ram $WORKER_MEMORY --vcpus 16 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker2.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker2-osd1.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker2-osd2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $W2_PROV --network network:ocp4-net,mac=52:54:00:b2:96:0e --network network:ocp4-net,mac=52:54:00:47:ad:1f --boot hd,network --name ocp4-worker2 --print-xml 1 > node-configs/ocp4-worker2.xml
 sudo virt-install --virt-type kvm --ram $WORKER_MEMORY --vcpus 16 --os-variant rhel8.1 --disk path=/var/lib/libvirt/images/ocp4-worker3.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker3-osd1.qcow2,device=disk,bus=virtio,format=qcow2 --disk path=/var/lib/libvirt/images/ocp4-worker3-osd2.qcow2,device=disk,bus=virtio,format=qcow2 $CPU_FLAGS --noautoconsole --vnc $W3_PROV --network network:ocp4-net,mac=52:54:00:b2:21:66 --network network:ocp4-net,mac=52:54:00:41:be:22 --boot hd,network --name ocp4-worker3 --print-xml 1 > node-configs/ocp4-worker3.xml
@@ -266,6 +287,12 @@ if $USE_IPI; then
 	done
 	if $FIREWALLD; then sudo firewall-cmd --reload; fi
 	sudo vbmc list
+fi
+
+if $USE_COMPACT; then
+	sudo virsh undefine ocp4-worker1
+	sudo virsh undefine ocp4-worker2
+	sudo virsh undefine ocp4-worker3
 fi
 
 echo -e "\n[INFO] Starting the bastion host and copying in our ssh keypair...\n"
@@ -402,9 +429,20 @@ if $USE_IPI; then
 		# We default to 3 masters anyway, so we can force all replica counts to 3 safely
 		sed -i 's/replicas:.*/replicas: 3/g' pre-install-config.yaml
 	fi
+	if $USE_COMPACT; then
+		# Revert replica count for compute to 0
+		sed -i '0,/replicas:.*/s//replicas: 0/' pre-install-config.yaml
+		sed -i '/worker1/,+8d' pre-install-config.yaml
+		sed -i '/worker2/,+8d' pre-install-config.yaml
+		sed -i '/worker3/,+8d' pre-install-config.yaml
+	fi
 else
-	scp -o StrictHostKeyChecking=no configs/dhcpd.conf root@192.168.123.100:/etc/dhcp/dhcpd.conf
 	cp -f configs/install-config.yaml pre-install-config.yaml
+	if $USE_COMPACT; then
+		# Revert replica count for compute to 0
+		sed -i '0,/replicas:.*/s//replicas: 0/' pre-install-config.yaml
+	fi
+	scp -o StrictHostKeyChecking=no configs/dhcpd.conf root@192.168.123.100:/etc/dhcp/dhcpd.conf
 	scp -o StrictHostKeyChecking=no -r pxeboot/generated/* root@192.168.123.100:/var/lib/tftpboot/pxelinux/pxelinux.cfg/
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "restorecon -Rv /var/lib/tftpboot/ && chmod -R 777 /var/lib/tftpboot/pxelinux"
 	scp -o StrictHostKeyChecking=no configs/cnv.example.com.db root@192.168.123.100:/var/named/cnv.example.com.db
@@ -412,7 +450,12 @@ fi
 
 scp -o StrictHostKeyChecking=no configs/squid.conf root@192.168.123.100:/etc/squid/squid.conf
 scp -o StrictHostKeyChecking=no configs/named.conf root@192.168.123.100:/etc/named.conf
-scp -o StrictHostKeyChecking=no configs/haproxy.cfg root@192.168.123.100:/etc/haproxy/haproxy.cfg
+
+if $USE_COMPACT; then
+	scp -o StrictHostKeyChecking=no configs/haproxy-compact.cfg root@192.168.123.100:/etc/haproxy/haproxy.cfg
+else
+	scp -o StrictHostKeyChecking=no configs/haproxy.cfg root@192.168.123.100:/etc/haproxy/haproxy.cfg
+fi
 scp -o StrictHostKeyChecking=no configs/123.168.192.db root@192.168.123.100:/var/named/123.168.192.db
 
 sed -i "s/PULL_SECRET/$PULL_SECRET/g" pre-install-config.yaml
@@ -461,8 +504,10 @@ if $USE_IPI; then
 	echo -e "\n\n[INFO] Grabbing the latest RHCOS images for the specified OpenShift version...\n"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "sh ~/rhcos-refresh.sh"
+	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/ocp-install/install-config.yaml /root/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install/ create manifests"
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
+        scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/
 	echo -e "\n\n[INFO] Running OpenShift IPI Installation (nodes will boot automatically)...\n"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install --log-level=debug create cluster"
 	# Sometimes this can timeout on a slower system so adding in an extra 1hr to the timeout
@@ -470,20 +515,35 @@ if $USE_IPI; then
 else
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create manifests"
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
+	scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create ignition-configs"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "cp /root/ocp-install/*.ign /var/www/html/ && restorecon -Rv /var/www/html && chmod -R 777 /var/www/html"
 
 	echo -e "\n\n[INFO] Booting OpenShift nodes (they'll PXE boot automatically)...\n"
-	for i in bootstrap master1 master2 master3 worker1 worker2
-	do
-		sudo virsh start ocp4-$i
-	done
+	if $USE_COMPACT; then
+		if $OCS_SUPPORT; then
+			sudo virsh attach-disk ocp4-master1 --source /var/lib/libvirt/images/ocp4-worker1-osd1.qcow2 --target vdb --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+			sudo virsh attach-disk ocp4-master1 --source /var/lib/libvirt/images/ocp4-worker1-osd2.qcow2 --target vdc --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+			sudo virsh attach-disk ocp4-master2 --source /var/lib/libvirt/images/ocp4-worker2-osd1.qcow2 --target vdb --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+			sudo virsh attach-disk ocp4-master2 --source /var/lib/libvirt/images/ocp4-worker2-osd2.qcow2 --target vdc --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+			sudo virsh attach-disk ocp4-master3 --source /var/lib/libvirt/images/ocp4-worker3-osd1.qcow2 --target vdb --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+			sudo virsh attach-disk ocp4-master3 --source /var/lib/libvirt/images/ocp4-worker3-osd2.qcow2 --target vdc --type disk --targetbus virtio --driver qemu --subdriver qcow2 --persistent
+		fi
+		for i in bootstrap master1 master2 master3
+		do
+			sudo virsh start ocp4-$i
+		done
+	else
+		for i in bootstrap master1 master2 master3 worker1 worker2
+		do
+			sudo virsh start ocp4-$i
+		done
 
-	if $OCS_SUPPORT; then
-		sudo virsh start ocp4-worker3
+		if $OCS_SUPPORT; then
+			sudo virsh start ocp4-worker3
+		fi
 	fi
-
 	sleep 20
 
 	echo -e "\n\n[INFO] Waiting for OpenShift installation to complete...\n"
@@ -527,6 +587,11 @@ sleep 180
 
 # These next steps are optional - move the exit above if you don't want to deploy them - TODO create variable
 
+if $USE_COMPACT; then
+	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "export KUBECONFIG=ocp-install/auth/kubeconfig && oc patch schedulers.config.openshift.io cluster --type merge --patch '{\"spec\":{\"mastersSchedulable\": true}}'"
+	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "export KUBECONFIG=ocp-install/auth/kubeconfig && oc patch --namespace=openshift-ingress-operator --patch='{\"spec\": {\"replicas\": 3}}' --type=merge ingresscontroller/default"
+fi
+
 # Deploy the CNV/bookbag service
 echo -e "\n\n[INFO] Deploying the Hands-on Lab Guide..."
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "export KUBECONFIG=ocp-install/auth/kubeconfig && oc new-project workbook"
@@ -553,6 +618,7 @@ ssh -o StrictHostKeyChecking=no root@192.168.123.100 "export KUBECONFIG=ocp-inst
 
 # Enable cluster-admin privileges for the cnv/bookbag user
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 "export KUBECONFIG=ocp-install/auth/kubeconfig && oc adm policy add-cluster-role-to-user cluster-admin -z cnv"
+ssh -o StrictHostKeyChecking=no root@192.168.123.100 "mkdir -p ~/.kube/ && cp -f ~/ocp-install/auth/kubeconfig ~/.kube/config"
 
 echo -e "\n\n[SUCCESS] Deployment has been succesful!"
 

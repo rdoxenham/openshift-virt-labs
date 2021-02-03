@@ -502,7 +502,7 @@ if $USE_IPI; then
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "oc adm release extract --registry-config ~/pull-secret.json --command=openshift-baremetal-install --to /root \$(oc version | awk '/Client/ {print \$3;}')"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install version"
 	echo -e "\n\n[INFO] Grabbing the latest RHCOS images for the specified OpenShift version...\n"
-	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
+#	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "sh ~/rhcos-refresh.sh"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/ocp-install/install-config.yaml /root/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install/ create manifests"
@@ -513,6 +513,7 @@ if $USE_IPI; then
 	# Sometimes this can timeout on a slower system so adding in an extra 1hr to the timeout
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install --log-level=debug wait-for install-complete"
 else
+	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp -f /root/ocp-install/install-config.yaml /root/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create manifests"
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
 	scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/

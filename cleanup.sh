@@ -29,7 +29,7 @@ then
 	else
 		for i in {1..6}
 		do
-			sudo iptables -D LIBVIRT_INP -p udp --dport 623$counter -j ACCEPT
+			sudo iptables -D LIBVIRT_INP -p udp --dport 623$i -j ACCEPT
 		done
 	fi
 

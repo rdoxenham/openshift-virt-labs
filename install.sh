@@ -428,6 +428,8 @@ if $USE_IPI; then
 	if $OCS_SUPPORT; then
 		# We default to 3 masters anyway, so we can force all replica counts to 3 safely
 		sed -i 's/replicas:.*/replicas: 3/g' pre-install-config.yaml
+	else
+		sed -i '/worker3/,+8d' pre-install-config.yaml
 	fi
 	if $USE_COMPACT; then
 		# Revert replica count for compute to 0
@@ -507,7 +509,9 @@ if $USE_IPI; then
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/ocp-install/install-config.yaml /root/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install/ create manifests"
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
-        scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/
+	if $USE_COMPACT; then
+	        scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/
+	fi
 	echo -e "\n\n[INFO] Running OpenShift IPI Installation (nodes will boot automatically)...\n"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install --log-level=debug create cluster"
 	# Sometimes this can timeout on a slower system so adding in an extra 1hr to the timeout
@@ -516,7 +520,9 @@ else
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp -f /root/ocp-install/install-config.yaml /root/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create manifests"
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
-	scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/
+	if $USE_COMPACT; then
+	        scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/
+	fi
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-install --dir=/root/ocp-install/ create ignition-configs"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "cp /root/ocp-install/*.ign /var/www/html/ && restorecon -Rv /var/www/html && chmod -R 777 /var/www/html"

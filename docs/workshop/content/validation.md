@@ -52,8 +52,8 @@ dns                                        4.4.0-0.nightly-2020-03-08-235004   T
 OK, so this is likely something that you've all done before, and it's hardly very exciting, but let's have a little bit of fun. Let's deploy a nifty little application inside of a pod and use it to verify that the OpenShift cluster is functioning properly; this will involve building an application from source and exposing it to your web-browser. We'll use the **s2i** (source to image) container type:
 
 ~~~bash
-$ oc new-project test-connectivity
-Now using project "test-connectivity" on server "https://api.cnv.example.com:6443".
+$ oc new-project test
+Now using project "test" on server "https://api.cnv.example.com:6443".
 
 $ oc new-app \
 	nodeshift/centos7-s2i-nodejs:12.x~https://github.com/vrutkovs/DuckHunt-JS

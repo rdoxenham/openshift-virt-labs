@@ -108,14 +108,14 @@ route.route.openshift.io/duckhunt-js exposed
 
 $ oc get route duckhunt-js
 NAME          HOST/PORT                                  PATH   SERVICES      PORT       TERMINATION   WILDCARD
-duckhunt-js   duckhunt-js-default.apps.cnv.example.com          duckhunt-js   8080-tcp                 None
+duckhunt-js   duckhunt-js-test.apps.cnv.example.com          duckhunt-js   8080-tcp                 None
 ~~~
 
-You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-default.apps.cnv.example.com](http://duckhunt-js-default.apps.cnv.example.com). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
+You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.cnv.example.com](http://duckhunt-js-test.apps.cnv.example.com). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
 
 <img src="img/duckhunt.png"/>
 
-Now, if you can tear yourself away from the game, let's actually start working with OpenShift virtualisation, first let's just clean up the default project...
+Now, if you can tear yourself away from the game, let's actually start working with OpenShift virtualisation, first let's just clean up the test project...
 
 ~~~bash
 $ oc delete dc/duckhunt-js bc/duckhunt-js svc/duckhunt-js route/duckhunt-js

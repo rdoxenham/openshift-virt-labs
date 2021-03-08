@@ -14,7 +14,7 @@ Next, navigate to the top-level '**Operators**' menu entry, and select '**Operat
 <img  border="1" src="img/ocp-virt-operator-install.png"/>
 
 
-Next you'll want to select the 'Install' button, which will take you to a second window where you'll be creating an 'Operator Subscription'. Leave the defaults here as they'll automatically select the latest version of OpenShift virtualization and will allow the software to be installed automatically:
+Next you'll want to select the 'Install' button, which will take you to a second window where you'll be creating an 'Operator Subscription'. Leave the defaults here as they'll automatically select the latest version of OpenShift Virtualization and will allow the software to be installed automatically:
 
 <img  border="1" src="img/ocp-virt-operator-install-details.png"/>
 

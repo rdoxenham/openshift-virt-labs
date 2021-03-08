@@ -1,4 +1,4 @@
-At the time of writing, OpenShift virtualisation is available as both upstream (**KubeVirt**) and downstream releases. **With the release of version 2.4 OpenShift Virtualization is now fully supported by Red Hat!** 
+At the time of writing, OpenShift Virtualization is available as both upstream (**KubeVirt**) and downstream releases. **With the release of version 2.4 OpenShift Virtualization is now fully supported by Red Hat!** 
 
 The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub (Marketplace) in the web-console. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here.
 
@@ -14,7 +14,7 @@ Next, navigate to the top-level '**Operators**' menu entry, and select '**Operat
 <img  border="1" src="img/ocp-virt-operator-install.png"/>
 
 
-Next you'll want to select the 'Install' button, which will take you to a second window where you'll be creating an 'Operator Subscription'. Leave the defaults here as they'll automatically select the latest version of OpenShift virtualisation and will allow the software to be installed automatically:
+Next you'll want to select the 'Install' button, which will take you to a second window where you'll be creating an 'Operator Subscription'. Leave the defaults here as they'll automatically select the latest version of OpenShift Virtualization and will allow the software to be installed automatically:
 
 <img  border="1" src="img/ocp-virt-operator-install-details.png"/>
 
@@ -28,7 +28,7 @@ Next we need to actually deploy all of the CNV components that this subscription
 
 <img  border="1" src="img/ocp-virt-hco-1.png"/>
 
-From here, select '**Create Instance**' on the '**CNV Operator Deployment**' button; this will deploy all of the necessary components that are required to support OpenShift virtualisation. The next page will show you the operators details - we can leave this as the defaults and select '**Create**' at the bottom. 
+From here, select '**Create Instance**' on the '**CNV Operator Deployment**' button; this will deploy all of the necessary components that are required to support OpenShift Virtualization. The next page will show you the operators details - we can leave this as the defaults and select '**Create**' at the bottom. 
 
 <img  border="1" src="img/ocp-virt-hco-2.png">
 

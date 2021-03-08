@@ -28,7 +28,7 @@ Next we need to actually deploy all of the CNV components that this subscription
 
 <img  border="1" src="img/ocp-virt-hco-1.png"/>
 
-From here, select '**Create Instance**' on the '**CNV Operator Deployment**' button; this will deploy all of the necessary components that are required to support OpenShift virtualization. The next page will show you the operators details - we can leave this as the defaults and select '**Create**' at the bottom. 
+From here, select '**Create Instance**' on the '**CNV Operator Deployment**' button; this will deploy all of the necessary components that are required to support OpenShift Virtualization. The next page will show you the operators details - we can leave this as the defaults and select '**Create**' at the bottom. 
 
 <img  border="1" src="img/ocp-virt-hco-2.png">
 

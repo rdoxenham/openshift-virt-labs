@@ -9,9 +9,9 @@ SSH_PUB_BASTION=~/.ssh/id_rsa.pub
 PULL_SECRET=''
 
 # Set the version of OpenShift you want to deploy
-# You can use a specific release, e.g. 4.6.1, or use latest-4.5, latest-4.6 (default), etc.
+# You can use a specific release, e.g. 4.5.18, or use latest-4.6, latest-4.7 (default), etc.
 # Check available versions here: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/
-OCP_VERSION=latest-4.6
+OCP_VERSION=latest-4.7
 
 # Configure if you want to try the pre-release code, where possible. Only set this if using a latest branch above
 # Default here is false and it may break RHCOS compatibility.
@@ -69,8 +69,16 @@ else
     sed -i "s|coreos.inst.image_url=http://192.168.123.100:81/rhcos.raw.gz||g" pxeboot/generated/*
 fi
 
-RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-metal.x86_64.raw.gz
-RHCOS_ROOTFS=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-live-rootfs.x86_64.img
+if $USE_PRERELEASE; then
+	RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/rhcos-metal.x86_64.raw.gz
+	RHCOS_ROOTFS=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/rhcos-live-rootfs.x86_64.img
+	RHCOS_RAMDISK=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/rhcos-live-initramfs.x86_64.img
+	RHCOS_KERNEL=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/latest/rhcos-live-kernel-x86_64
+
+else
+	RHCOS_RAW=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-metal.x86_64.raw.gz
+	RHCOS_ROOTFS=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$SUBVER/latest/rhcos-live-rootfs.x86_64.img
+fi
 
 echo "=============================================="
 echo "OpenShift Virtualisation Lab Deployment Script"
@@ -466,11 +474,12 @@ scp -o StrictHostKeyChecking=no pre-install-config.yaml root@192.168.123.100:/ro
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 'sed -i "s|BAST_SSHKEY|$(cat /root/.ssh/id_rsa.pub)|g" install-config.yaml'
 ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
 
+echo $PULL_SECRET > /tmp/secret
+scp -o StrictHostKeyChecking=no /tmp/secret root@192.168.123.100:~/pull-secret.json
+
 if $USE_DISCONNECTED; then
     echo -e "\n\n[INFO] Deploying the disconnected image registry...\n"
     scp -o StrictHostKeyChecking=no scripts/deploy-disconnected.sh root@192.168.123.100:/root/
-    echo $PULL_SECRET > /tmp/secret
-    scp -o StrictHostKeyChecking=no /tmp/secret root@192.168.123.100:~/pull-secret.json
     rm /tmp/secret -f
     ssh -o StrictHostKeyChecking=no root@192.168.123.100 sh /root/deploy-disconnected.sh
 fi
@@ -504,7 +513,6 @@ if $USE_IPI; then
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "oc adm release extract --registry-config ~/pull-secret.json --command=openshift-baremetal-install --to /root \$(oc version | awk '/Client/ {print \$3;}')"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install version"
 	echo -e "\n\n[INFO] Grabbing the latest RHCOS images for the specified OpenShift version...\n"
-#	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/install-config.yaml /root/ocp-install/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "sh ~/rhcos-refresh.sh"
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/ocp-install/install-config.yaml /root/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install/ create manifests"

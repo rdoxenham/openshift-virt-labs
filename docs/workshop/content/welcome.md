@@ -13,7 +13,7 @@ This is the self-hosted lab guide that will run you through the following:
 * **Deploying OpenShift virtualisation**
 * **Setting up Storage for OpenShift virtualisation**
 * **Setting up Networking for OpenShift virtualisation**
-* **Deploying some CentOS8 / RHEL8 / Fedora31 Test Workloads**
+* **Deploying some CentOS8 / RHEL8 / Fedora33 Test Workloads**
 * **Performing Live Migrations and Node Maintenance**
 * **Utilising network masquerading on pod networking for VM's**
 * **Using the OpenShift Web Console extensions for OpenShift virtualisation**

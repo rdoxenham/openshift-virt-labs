@@ -1,0 +1,25 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: workers-empty-enp3s0
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 2.2.0
+    networkd: {}
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,VFlQRT1FdGhlcm5ldApOQU1FPWVucDNzMApERVZJQ0U9ZW5wM3MwCk9OQk9PVD15ZXMKQk9PVFBST1RPPW5vbmUK
+          verification: {}
+        filesystem: root
+        mode: 420
+        path: /etc/sysconfig/network-scripts/ifcfg-enp3s0
+  osImageURL: ""

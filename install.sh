@@ -517,6 +517,7 @@ if $USE_IPI; then
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 cp /root/ocp-install/install-config.yaml /root/install-config.yaml
 	ssh -o StrictHostKeyChecking=no root@192.168.123.100 "./openshift-baremetal-install --dir=/root/ocp-install/ create manifests"
 	scp -o StrictHostKeyChecking=no configs/ocp/99* root@192.168.123.100:/root/ocp-install/openshift/
+	scp -o StrictHostKeyChecking=no configs/ocp/97* root@192.168.123.100:/root/ocp-install/openshift/
 	if $USE_COMPACT; then
 	        scp -o StrictHostKeyChecking=no configs/ocp/cluster-scheduler-02-config.yaml root@192.168.123.100:/root/ocp-install/openshift/
 	fi

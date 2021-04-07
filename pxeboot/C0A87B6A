@@ -5,7 +5,7 @@ timeout 1
 label worker3
   menu label Install OCP4 Worker 3
   kernel http://192.168.123.100:81/rhcos.kernel
-  append initrd=http://192.168.123.100:81/rhcos.initramfs ip=dhcp rd.neednet=1 console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.ignition_url=http://192.168.123.100:81/worker.ign coreos.live.rootfs_url=http://192.168.123.100:81/rhcos.rootfs coreos.inst.image_url=http://192.168.123.100:81/rhcos.raw.gz
+  append initrd=http://192.168.123.100:81/rhcos.initramfs ip=enp1s0:dhcp ip=enp2s0:none rd.neednet=1 console=tty0 console=ttyS0 coreos.inst=yes coreos.inst.install_dev=vda coreos.inst.ignition_url=http://192.168.123.100:81/worker.ign coreos.live.rootfs_url=http://192.168.123.100:81/rhcos.rootfs coreos.inst.image_url=http://192.168.123.100:81/rhcos.raw.gz
 
 label local
   menu label Boot from ^local drive

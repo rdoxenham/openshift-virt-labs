@@ -52,8 +52,8 @@ dns                                        4.4.0-0.nightly-2020-03-08-235004   T
 OK, so this is likely something that you've all done before, and it's hardly very exciting, but let's have a little bit of fun. Let's deploy a nifty little application inside of a pod and use it to verify that the OpenShift cluster is functioning properly; this will involve building an application from source and exposing it to your web-browser. We'll use the **s2i** (source to image) container type:
 
 ~~~bash
-$ oc project default
-Now using project "default" on server "https://api.cnv.example.com:6443".
+$ oc new-project test
+Now using project "test" on server "https://api.cnv.example.com:6443".
 
 $ oc new-app \
 	nodeshift/centos7-s2i-nodejs:12.x~https://github.com/vrutkovs/DuckHunt-JS
@@ -108,14 +108,14 @@ route.route.openshift.io/duckhunt-js exposed
 
 $ oc get route duckhunt-js
 NAME          HOST/PORT                                  PATH   SERVICES      PORT       TERMINATION   WILDCARD
-duckhunt-js   duckhunt-js-default.apps.cnv.example.com          duckhunt-js   8080-tcp                 None
+duckhunt-js   duckhunt-js-test.apps.cnv.example.com          duckhunt-js   8080-tcp                 None
 ~~~
 
-You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-default.apps.cnv.example.com](http://duckhunt-js-default.apps.cnv.example.com). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
+You should be able to open up the application in the same browser that you're reading this guide from, either copy and paste the address, or click this clink: [http://duckhunt-js-test.apps.cnv.example.com](http://duckhunt-js-test.apps.cnv.example.com). If your OpenShift cluster is working as expected and the application build was successful, you should now be able to have a quick play with this... good luck ;-)
 
 <img src="img/duckhunt.png"/>
 
-Now, if you can tear yourself away from the game, let's actually start working with OpenShift virtualisation, first let's just clean up the default project...
+Now, if you can tear yourself away from the game, let's actually start working with OpenShift virtualisation, first let's just clean up the test project...
 
 ~~~bash
 $ oc delete dc/duckhunt-js bc/duckhunt-js svc/duckhunt-js route/duckhunt-js

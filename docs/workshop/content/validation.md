@@ -56,20 +56,19 @@ $ oc new-project test
 Now using project "test" on server "https://api.cnv.example.com:6443".
 
 $ oc new-app \
-	nodeshift/centos7-s2i-nodejs:12.x~https://github.com/vrutkovs/DuckHunt-JS
+	nodejs~https://github.com/vrutkovs/DuckHunt-JS
 
 (...)
 
 --> Creating resources ...
-    imagestream.image.openshift.io "centos7-s2i-nodejs" created
     imagestream.image.openshift.io "duckhunt-js" created
     buildconfig.build.openshift.io "duckhunt-js" created
-    deploymentconfig.apps.openshift.io "duckhunt-js" created
+    deployment.apps "duckhunt-js" created
     service "duckhunt-js" created
 --> Success
-    Build scheduled, use 'oc logs -f bc/duckhunt-js' to track its progress.
+    Build scheduled, use 'oc logs -f buildconfig/duckhunt-js' to track its progress.
     Application is not exposed. You can expose services to the outside world by executing one or more of the commands below:
-     'oc expose svc/duckhunt-js'
+     'oc expose service/duckhunt-js'
     Run 'oc status' to view your app.
 ~~~
 

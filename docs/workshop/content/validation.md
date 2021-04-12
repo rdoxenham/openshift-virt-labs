@@ -13,7 +13,7 @@ ocp4-worker2.cnv.example.com   Ready    worker   35m     v1.17.1
 If you do not see **three** masters and **two** workers listed in your output, you may need to approve the CSR requests, note that you only need to do this if you're missing nodes, but it won't harm to run this regardless:
 
 ~~~bash
-$ for csr in $(oc -n openshift-machine-api get csr | awk '/Pending/ {print $1}'); \
+$ for csr in $(oc get csr | awk '/Pending/ {print $1}'); \
 	do oc adm certificate approve $csr; done
 
 certificatesigningrequest.certificates.k8s.io/csr-26rcg approved

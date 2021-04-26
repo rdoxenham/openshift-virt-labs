@@ -81,7 +81,7 @@ Our application will now build from source, you can watch it happen with:
 $ oc logs duckhunt-js-1-build -f
 (...)
 
-Successfully pushed image-registry.openshift-image-registry.svc:5000/default/duckhunt-js:latest@sha256:4d0186040826a4be9d678459c5d6831e107a60c403d65a0da77fb076ff89084c
+Successfully pushed image-registry.openshift-image-registry.svc:5000/test/duckhunt-js:latest@sha256:4d0186040826a4be9d678459c5d6831e107a60c403d65a0da77fb076ff89084c
 Push successful
 ~~~
 
@@ -118,9 +118,6 @@ You should be able to open up the application in the same browser that you're re
 Now, if you can tear yourself away from the game, let's actually start working with OpenShift virtualisation, first let's just clean up the test project...
 
 ~~~bash
-$ oc delete dc/duckhunt-js bc/duckhunt-js svc/duckhunt-js route/duckhunt-js
-deploymentconfig.apps.openshift.io "duckhunt-js" deleted                                                                                                                                           
-buildconfig.build.openshift.io "duckhunt-js" deleted                                                                                                                                               
-service "duckhunt-js" deleted
-route.route.openshift.io "duckhunt-js" deleted
+$ oc delete project test
+project.project.openshift.io "test" deleted
 ~~~

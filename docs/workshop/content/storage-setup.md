@@ -389,6 +389,7 @@ metadata:
     app: containerized-data-importer
   annotations:
     cdi.kubevirt.io/storage.import.endpoint: "http://192.168.123.100:81/rhel8-kvm.img"
+    volume.kubernetes.io/selected-node: ocp4-worker2.cnv.example.com                        
 spec:
   volumeMode: Filesystem
   storageClassName: hostpath-provisioner

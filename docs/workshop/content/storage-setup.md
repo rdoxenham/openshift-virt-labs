@@ -337,7 +337,7 @@ Now we can set the HostPathProvisioner configuration itself, i.e. telling the op
 
 ~~~bash
 $ cat << EOF | oc apply -f -
-apiVersion: hostpathprovisioner.kubevirt.io/v1alpha1
+apiVersion: hostpathprovisioner.kubevirt.io/v1beta1
 kind: HostPathProvisioner
 metadata:
   name: hostpath-provisioner

@@ -1,4 +1,4 @@
-At the time of writing, OpenShift Virtualization is available as both upstream (**KubeVirt**) and downstream releases. **With the release of version 2.4 OpenShift Virtualization is now fully supported by Red Hat!** 
+At the time of writing, OpenShift Virtualization is available as both upstream (**KubeVirt**) and downstream releases. **With the release of version 2.4 OpenShift Virtualization is now fully supported by Red Hat!**
 
 The mechanism for installation is to utilise the operator model and deploy via the OpenShift Operator Hub (Marketplace) in the web-console. Note, it's entirely possible to deploy via the CLI should you wish to do so, but we're not documenting that mechanism here.
 
@@ -24,13 +24,13 @@ Make sure that the namespace it will be installed to is "**openshift-cnv**" - it
 
 <img  border="1" src="img/ocp-virt-operatore-install-success.png"/>
 
-Next we need to actually deploy all of the CNV components that this subscription provides. Select the "**OpenShift Virtualization**" link under the '**Name**' column, and you'll be presented with the following:
 
-<img  border="1" src="img/ocp-virt-hco-1.png"/>
+Next we need to deploy the HyperConverged operator, which creates and maintains an OpenShift Virtualization Deployment. This may raise some questions about hyperconverged infrastructures, however this is simply how the OpenShift Virtualization operator is deployed. It does not impact the relation between compute and storage as we will see later in the labs. Click on "**Create HyperConverged**"
 
-From here, select '**Create Instance**' on the '**CNV Operator Deployment**' button; this will deploy all of the necessary components that are required to support OpenShift Virtualization. The next page will show you the operators details - we can leave this as the defaults and select '**Create**' at the bottom. 
+This will open the next screen where we can accept all the default for this lab. Continue the installation by click on "**Create**"
 
-<img  border="1" src="img/ocp-virt-hco-2.png">
+<img  border="1" src="img/ocp-virt-operatore-create-HyperC.png"/>
+
 
 Whilst this does its thing, you can move to the '**Workloads**' --> '**Pods**' menu entry and watch it start all of its resources (select "Pending" from the pods filter):
 
@@ -56,8 +56,8 @@ You will know the process is complete when you can return to the top terminal an
 
 ~~~bash
 $ oc get csv -n openshift-cnv
-NAME                                      DISPLAY                    VERSION   REPLACES   PHASE
-kubevirt-hyperconverged-operator.v2.4.0   OpenShift Virtualization   2.4.0                Succeeded
+NAME                                      DISPLAY                    VERSION   REPLACES                                  PHASE
+kubevirt-hyperconverged-operator.v2.6.2   OpenShift Virtualization   2.6.2     kubevirt-hyperconverged-operator.v2.6.1   Succeeded
 ~~~
 
 If you do not see `Succeeded` in the `PHASE` column then the deployment may still be progressing, or has failed. You will not be able to proceed until the installation has been successful. Once the `PHASE` changes to `Succeeded` you can validate that the required resources and the additional components have been deployed across the nodes. First let's check the pods deployed in the `openshift-cnv` namespace:

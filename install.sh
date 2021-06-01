@@ -167,7 +167,7 @@ fi
 if $EL8 && $USE_IPI
 then
 	echo -e "\n\n[INFO] Enabling OpenStack package repos for VirtualBMC...\n"
-	dnf install https://www.rdoproject.org/repos/rdo-release.el8.rpm -y
+        dnf install https://repos.fedorapeople.org/repos/openstack/openstack-victoria/rdo-release-victoria-3.el8.noarch.rpm -y
 	dnf install python36 -y
 fi
 

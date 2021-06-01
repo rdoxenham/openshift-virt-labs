@@ -102,9 +102,9 @@ Now let's create a new NFS-based Peristent Volume Claim (PVC).
 
 For this volume claim we will use a special annotation `cdi.kubevirt.io/storage.import.endpoint` which utilises the Kubernetes Containerized Data Importer (CDI). 
 
-> **NOTE**: CDI is a utility to import, upload, and clone virtual machine images for OpenShift virtualisation. The CDI controller watches for this annotation on the PVC and if found it starts a process to import, upload, or clone. When the annotation is detected the `CDI` controller starts a pod which imports the image from that URL. Cloning and uploading follow a similar process. Read more about the Containerised Data Importer [here](https://kubevirt.io/2018/containerized-data-importer.html).
+> **NOTE**: CDI is a utility to import, upload, and clone virtual machine images for OpenShift virtualisation. The CDI controller watches for this annotation on the PVC and if found it starts a process to import, upload, or clone. When the annotation is detected the `CDI` controller starts a pod which imports the image from that URL. Cloning and uploading follow a similar process. Read more about the Containerised Data Importer [here](https://github.com/kubevirt/containerized-data-importer).
 
-Basically we are askng OpenShift to create this PVC and use the image in the endpoint to fill it. In this case we use `"http://192.168.123.100:81/rhel8-kvm.img"` in the annotation to ensure that upon instantiation of the PV it is populated with the contents of our specific RHEL8 KVM image.
+Basically we are asking OpenShift to create this PVC and use the image in the endpoint to fill it. In this case we use `"http://192.168.123.100:81/rhel8-kvm.img"` in the annotation to ensure that upon instantiation of the PV it is populated with the contents of our specific RHEL8 KVM image.
 
 In addition to triggering the CDI utility we also specify the storage class we created earlier (`nfs`) which is setting the `kubernetes.io/no-provisioner` type as described. Finally note the `requests` section. We are asking for a 40gb volume size which we ensured were available previously via nfs-pv1 and nfs-pv2.
 
@@ -196,7 +196,7 @@ Volumes:
 (...)
 ~~~
 
-Here we can see the importer settings we requested through our claims, such as `IMPORTER_SOURCE`, `IMPORTER_ENDPOINT`, and`IMPORTER_IMAGE_SIZE`. 
+Here we can see the importer settings we requested through our claims, such as `IMPORTER_SOURCE`, `IMPORTER_ENDPOINT`, and `IMPORTER_IMAGE_SIZE`. 
 
 Once this process has completed you'll notice that your PVC is ready to use:
 
@@ -337,7 +337,7 @@ Now we can set the HostPathProvisioner configuration itself, i.e. telling the op
 
 ~~~bash
 $ cat << EOF | oc apply -f -
-apiVersion: hostpathprovisioner.kubevirt.io/v1alpha1
+apiVersion: hostpathprovisioner.kubevirt.io/v1beta1
 kind: HostPathProvisioner
 metadata:
   name: hostpath-provisioner
@@ -345,7 +345,7 @@ spec:
   imagePullPolicy: IfNotPresent
   pathConfig:
     path: "/var/hpvolumes"
-    useNamingPrefix: "false"
+    useNamingPrefix: false
 EOF
 
 hostpathprovisioner.hostpathprovisioner.kubevirt.io/hostpath-provisioner created
@@ -389,6 +389,7 @@ metadata:
     app: containerized-data-importer
   annotations:
     cdi.kubevirt.io/storage.import.endpoint: "http://192.168.123.100:81/rhel8-kvm.img"
+    volume.kubernetes.io/selected-node: ocp4-worker2.cnv.example.com                        
 spec:
   volumeMode: Filesystem
   storageClassName: hostpath-provisioner

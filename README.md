@@ -1,5 +1,7 @@
 ## OpenShift Virtualization Hands-on Lab
 
+> **NOTE**: This repository has been deprecated in favour of OpenShift AIO: https://github.com/RHFieldProductManagement/openshift-aio - this is no longer maintained. Thanks!
+
 **Authors**: [Rhys Oxenham](mailto:roxenham@redhat.com) and [August Simonelli](mailto:asimonel@redhat.com)
 
 Welcome to our hands-on OpenShift Virtualization lab. Right now this repo provides an installation script that builds out an OpenShift 4.6 UPI installation (although the versions can be easily customised) on a single baremetal machine where all of the masters and workers are virtualised. The script also deploys a self-hosted OpenShift Virtualization hands-on self-paced lab guide based on [OpenShift homeroom](https://github.com/openshift-homeroom) - this guide will walk you through deployment of OpenShift Virtualization through to some common usage patterns. It's also possible to test out [OpenShift Container Storage](https://www.redhat.com/en/technologies/cloud-computing/openshift-container-storage) (OCS) as part of this lab should you have the required hardware for it.

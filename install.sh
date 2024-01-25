@@ -324,6 +324,9 @@ sshpass -p redhat ssh-copy-id -o StrictHostKeyChecking=no -i $SSH_PUB_BASTION ro
 
 cat <<EOF > bastion-deploy.sh
 hostnamectl set-hostname ocp4-bastion.cnv.example.com
+growpart /dev/vda 1
+xfs_growfs /
+subscription-manager refresh
 dnf install qemu-img jq git httpd squid dhcp-server xinetd net-tools nano bind bind-utils haproxy wget syslinux libvirt-libs -y
 dnf install tftp-server syslinux-tftpboot -y
 dnf update -y
@@ -370,8 +373,6 @@ rm -f oc kubectl
 chmod a+x /usr/bin/oc
 chmod a+x /usr/bin/kubectl
 mkdir -p /root/ocp-install/
-growpart /dev/vda 1
-xfs_growfs /
 EOF
 
 if $USE_IPI; then
